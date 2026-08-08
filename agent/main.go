@@ -56,7 +56,7 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	log.Printf("minilab file-manager backend")
+	log.Printf("minilab backend")
 	log.Printf("  root dir : %s", cfg.RootDir)
 	log.Printf("  listening: :%s", cfg.Port)
 	log.Fatal(srv.ListenAndServe())

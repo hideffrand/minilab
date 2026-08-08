@@ -3,7 +3,7 @@ node_modules/
 .DS_Store
 *.log
 
-minilab-app/.expo/
-minilab-app/dist/
+mobile/.expo/
+mobile/dist/
 
-minilab-backend/dist/
+agent/dist/

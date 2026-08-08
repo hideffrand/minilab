@@ -114,7 +114,7 @@ if confirm "Run automatically at boot via systemd?" "y/N"; then
   SERVICE_FILE="/etc/systemd/system/minilab-backend.service"
   sudo bash -c "cat > $SERVICE_FILE" <<EOF
 [Unit]
-Description=Minilab File Manager Backend
+Description=Minilab Backend
 After=network-online.target tailscaled.service
 Wants=network-online.target
 

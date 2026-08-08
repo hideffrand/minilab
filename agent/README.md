@@ -1,4 +1,4 @@
-# Minilab Backend — File Manager API
+# Minilab Backend — API
 
 Go backend with **one external dependency** (`github.com/skip2/go-qrcode`,
 used only to render the pairing QR code in the terminal — everything else is
@@ -9,7 +9,7 @@ locally, as long as there's internet during the first build).
 ## Quick Setup (one script does everything)
 
 ```bash
-cd minilab-backend
+cd agent
 ./install.sh
 ```
 
@@ -61,7 +61,7 @@ re-running the setup:
 source ~/.minilab/config.env && ./minilab-backend -pair -name "Family Phone"
 ```
 
-## API Features (Phase 1: File Manager)
+## API Features
 
 - `GET  /api/health` — check the server is alive (no API key needed)
 - `GET  /api/files/list?path=...` — list folder contents
@@ -89,7 +89,7 @@ All `/api/files/*` endpoints require the header `X-API-Key: <your api key>`.
 Needs Go 1.22+. If you don't have it on Mint: `sudo apt install golang-go`
 
 ```bash
-cd minilab-backend
+cd agent
 go build -o minilab-backend .   # Go downloads go-qrcode once (needs internet)
 
 export MINILAB_ROOT_DIR=/home/you/minilab-storage
@@ -125,7 +125,7 @@ manually, create `/etc/systemd/system/minilab-backend.service`:
 
 ```ini
 [Unit]
-Description=Minilab File Manager Backend
+Description=Minilab Backend
 After=network-online.target tailscaled.service
 Wants=network-online.target
 
@@ -133,7 +133,7 @@ Wants=network-online.target
 Type=simple
 User=you
 EnvironmentFile=/home/you/.minilab/config.env
-ExecStart=/home/you/minilab-backend/minilab-backend
+ExecStart=/home/you/agent/minilab-backend
 Restart=on-failure
 
 [Install]
@@ -144,6 +144,41 @@ WantedBy=multi-user.target
 sudo systemctl daemon-reload
 sudo systemctl enable --now minilab-backend
 sudo systemctl status minilab-backend
+```
+
+## Uninstall
+
+Quick way — run the companion script from the `agent/` folder:
+
+```bash
+cd agent
+./uninstall.sh
+```
+
+It asks before touching anything destructive and removes, in order:
+1. **systemd service** — stops, disables, and deletes
+   `/etc/systemd/system/minilab-backend.service` (skipped if never installed).
+2. **Built binary** — `agent/minilab-backend`.
+3. **Shared storage folder** (`MINILAB_ROOT_DIR`) — only deleted if you type
+   the exact folder path (an accidental Enter never wipes your files).
+4. **Config folder** `~/.minilab/` — API key + saved pairing codes.
+
+Existing pairing codes on phones stop working once the service is stopped and
+the API key is deleted. Go itself is left installed (it's a general tool);
+remove it manually if you want: `sudo apt remove golang-go`.
+
+### Manual uninstall
+
+Equivalent steps by hand:
+
+```bash
+sudo systemctl stop minilab-backend 2>/dev/null || true
+sudo systemctl disable minilab-backend 2>/dev/null || true
+sudo rm -f /etc/systemd/system/minilab-backend.service
+sudo systemctl daemon-reload
+rm -f /home/you/agent/minilab-backend
+rm -rf ~/.minilab            # config + API key + saved pairing codes
+rm -rf /home/you/minilab-storage   # ONLY if you want to delete your files too
 ```
 
 ## Security notes

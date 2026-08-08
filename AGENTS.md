@@ -1,20 +1,20 @@
 # AGENTS.md
 
-Monorepo-lite of two **independent** projects, neither is a git repo (no commits, no CI, no tests anywhere):
+Monorepo-lite of two **independent** projects, tracked by one root git repo (no CI, no tests anywhere):
 
-- `minilab-app/` — Expo (SDK 51) + React Native 0.74 + TypeScript mobile app.
-- `minilab-backend/` — Go 1.22+ HTTP file-server API. Only external dep: `go-qrcode` (used solely for the terminal QR in `-pair` mode).
+- `mobile/` — Expo (SDK 51) + React Native 0.74 + TypeScript mobile app.
+- `agent/` — Go 1.22+ HTTP API. Only external dep: `go-qrcode` (used solely for the terminal QR in `-pair` mode).
 
 ## Verify / build
 
 Backend (no env vars needed for build/vet):
 ```bash
-cd minilab-backend && go vet ./... && go build -o minilab-backend .
+cd agent && go vet ./... && go build -o minilab-backend .
 ```
 
 App — no lint/test scripts exist. Only verification is the typecheck:
 ```bash
-cd minilab-app && npm install && npx tsc --noEmit
+cd mobile && npm install && npx tsc --noEmit
 ```
 Dev server: `npx expo start` (Expo Go). No `package-lock.json` is committed; `node_modules` not installed by default.
 
@@ -22,6 +22,7 @@ Dev server: `npx expo start` (Expo Go). No `package-lock.json` is committed; `no
 
 Server **refuses to start** without env: `MINILAB_ROOT_DIR` and `MINILAB_API_KEY` are required; `MINILAB_PORT` optional (default 8080).
 - One-shot setup + pairing: `./install.sh` (installs Go if missing, generates key, writes `~/.minilab/config.env` mode 600, optional systemd service, prints QR/pairing code).
+- Uninstall: `./uninstall.sh` (stops/removes the systemd service, removes the binary; asks before deleting the shared storage folder and `~/.minilab`).
 - Quick rerun after setup: `source ~/.minilab/config.env && go run .`
 - Regenerate pairing code any time: `./minilab-backend -pair -name "..."` (auto-detects Tailscale IP via `tailscale ip -4`).
 

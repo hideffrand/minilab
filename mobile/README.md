@@ -1,4 +1,4 @@
-# Minilab Control — Mobile App (Phase 1: File Manager)
+# Minilab Control — Mobile App
 
 Expo + React Native + TypeScript. Typecheck-clean (`npx tsc --noEmit`).
 **Target: Android first** — iOS is not a priority yet.
@@ -66,7 +66,7 @@ npm run start:dev-client
 ## Development setup (Expo Go)
 
 ```bash
-cd minilab-app
+cd mobile
 npm install
 npx expo start
 ```
@@ -101,7 +101,7 @@ eas build --platform android
 
 ## Next-feature roadmap (not implemented yet)
 
-In line with your original feature list, my suggested order after File Manager:
+In line with your original feature list, my suggested order for the next features:
 
 1. **System Health Monitor** — new backend Go endpoints (read `/proc`
    directly, no external dependency) + a dashboard in the app.

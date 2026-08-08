@@ -55,7 +55,10 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
   const pasteFromClipboard = async () => {
     const text = await Clipboard.getStringAsync();
     if (!text) {
-      Alert.alert("Clipboard is empty", "Copy the pairing code first, then come back here.");
+      Alert.alert(
+        "Clipboard is empty",
+        "Copy the pairing code first, then come back here.",
+      );
       return;
     }
     setPairingCode(text);
@@ -64,13 +67,19 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
 
   const handleTestAndSave = async () => {
     if (!name.trim() || !baseUrl.trim() || !apiKey.trim()) {
-      Alert.alert("Fill everything in", "Name, Server URL, and API Key are required.");
+      Alert.alert(
+        "Fill everything in",
+        "Name, Server URL, and API Key are required.",
+      );
       return;
     }
     setTesting(true);
     const trimmedUrl = baseUrl.trim().replace(/\/+$/, "");
     try {
-      const client = createClient({ baseUrl: trimmedUrl, apiKey: apiKey.trim() });
+      const client = createClient({
+        baseUrl: trimmedUrl,
+        apiKey: apiKey.trim(),
+      });
       // Exercises reachability AND the API key in one call.
       await client.get("/api/files/list", { params: { path: "" } });
 
@@ -81,7 +90,11 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
           apiKey: apiKey.trim(),
         });
       } else {
-        await addDevice({ name: name.trim(), baseUrl: trimmedUrl, apiKey: apiKey.trim() });
+        await addDevice({
+          name: name.trim(),
+          baseUrl: trimmedUrl,
+          apiKey: apiKey.trim(),
+        });
       }
       navigation.navigate("FileBrowser", { path: "" });
     } catch (e: any) {
@@ -92,7 +105,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
         Alert.alert(
           "Connection failed",
           "Make sure Tailscale is active on both the phone and laptop, and the backend is running.\n\n" +
-            e.message
+            e.message,
         );
       }
     } finally {
@@ -112,7 +125,12 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               style={[styles.tab, mode === "paste" && styles.tabActive]}
               onPress={() => setMode("paste")}
             >
-              <Text style={[styles.tabText, mode === "paste" && styles.tabTextActive]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  mode === "paste" && styles.tabTextActive,
+                ]}
+              >
                 Paste Code
               </Text>
             </TouchableOpacity>
@@ -120,10 +138,16 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               style={[styles.tab, mode === "manual" && styles.tabActive]}
               onPress={() => setMode("manual")}
             >
-              <Text style={[styles.tabText, mode === "manual" && styles.tabTextActive]}>
+              <Text
+                style={[
+                  styles.tabText,
+                  mode === "manual" && styles.tabTextActive,
+                ]}
+              >
                 Manual
               </Text>
-            </TouchableOpacity>          </View>
+            </TouchableOpacity>
+          </View>
         )}
 
         {mode === "paste" ? (
@@ -157,10 +181,15 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               autoCorrect={false}
               multiline
             />
-            <TouchableOpacity style={styles.secondaryBtn} onPress={pasteFromClipboard}>
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={pasteFromClipboard}
+            >
               <View style={styles.btnRow}>
                 <Ionicons name="clipboard-outline" size={16} color="#e5e7eb" />
-                <Text style={styles.secondaryBtnText}>Paste from Clipboard</Text>
+                <Text style={styles.secondaryBtnText}>
+                  Paste from Clipboard
+                </Text>
               </View>
             </TouchableOpacity>
             <TouchableOpacity
@@ -226,7 +255,13 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#111318" },
-  tabRow: { flexDirection: "row", backgroundColor: "#1c1f26", borderRadius: 10, padding: 4, marginBottom: 20 },
+  tabRow: {
+    flexDirection: "row",
+    backgroundColor: "#1c1f26",
+    borderRadius: 10,
+    padding: 4,
+    marginBottom: 20,
+  },
   tab: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: "center" },
   tabActive: { backgroundColor: "#3b82f6" },
   tabText: { color: "#8a8f98", fontWeight: "600" },
@@ -257,7 +292,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 12,
   },
-  mono: { fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", color: "#e5e7eb" },
+  mono: {
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    color: "#e5e7eb",
+  },
   secondaryBtn: {
     backgroundColor: "#2a2e37",
     marginTop: 12,

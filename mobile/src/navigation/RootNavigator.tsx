@@ -1,7 +1,8 @@
 import React from "react";
-import { TouchableOpacity, Text } from "react-native";
+import { TouchableOpacity } from "react-native";
 import { NavigationContainer, DarkTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import DeviceListScreen from "../screens/DeviceListScreen";
 import AddDeviceScreen from "../screens/AddDeviceScreen";
 import ScanQRScreen from "../screens/ScanQRScreen";
@@ -64,7 +65,7 @@ export default function RootNavigator() {
             title: activeDevice?.name ?? "Files",
             headerRight: () => (
               <TouchableOpacity onPress={() => navigation.navigate("DeviceList")}>
-                <Text style={{ color: "#3b82f6", fontSize: 20 }}>🖥️</Text>
+                <Ionicons name="desktop-outline" size={22} color="#3b82f6" />
               </TouchableOpacity>
             ),
           })}

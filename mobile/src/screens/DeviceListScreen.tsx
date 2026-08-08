@@ -8,6 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
 import { DeviceProfile } from "../types";
@@ -65,7 +66,7 @@ export default function DeviceListScreen({ navigation }: Props) {
               onPress={() => openDevice(item)}
               onLongPress={() => onLongPress(item)}
             >
-              <Text style={styles.cardIcon}>🖥️</Text>
+              <Ionicons name="desktop-outline" size={26} color="#f2f3f5" style={styles.cardIcon} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardName}>{item.name}</Text>
                 <Text style={styles.cardUrl}>{item.baseUrl}</Text>

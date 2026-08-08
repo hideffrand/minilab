@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
 import { createClient } from "../api/client";
@@ -138,7 +139,10 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               style={styles.scanBtn}
               onPress={() => navigation.navigate("ScanQR")}
             >
-              <Text style={styles.scanBtnText}>📷 Scan QR Code</Text>
+              <View style={styles.btnRow}>
+                <Ionicons name="qr-code-outline" size={18} color="#fff" />
+                <Text style={styles.scanBtnText}>Scan QR Code</Text>
+              </View>
             </TouchableOpacity>
 
             <Text style={styles.orDivider}>or paste manually</Text>
@@ -154,7 +158,10 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               multiline
             />
             <TouchableOpacity style={styles.secondaryBtn} onPress={pasteFromClipboard}>
-              <Text style={styles.secondaryBtnText}>📋 Paste from Clipboard</Text>
+              <View style={styles.btnRow}>
+                <Ionicons name="clipboard-outline" size={16} color="#e5e7eb" />
+                <Text style={styles.secondaryBtnText}>Paste from Clipboard</Text>
+              </View>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.saveBtn}
@@ -242,6 +249,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+  btnRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   scanBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
   orDivider: {
     color: "#6b7280",

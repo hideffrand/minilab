@@ -11,6 +11,7 @@ import {
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Video, ResizeMode } from "expo-av";
 import * as Sharing from "expo-sharing";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
 import { fileUrl } from "../api/client";
@@ -83,7 +84,7 @@ export default function FilePreviewScreen({ route }: Props) {
           />
         ) : AUDIO_EXT.includes(ext) ? (
           <View style={styles.center}>
-            <Text style={styles.bigIcon}>🎵</Text>
+            <Ionicons name="musical-notes-outline" size={56} color="#f2f3f5" style={styles.bigIcon} />
             <Video
               source={{
                 uri: previewUri,
@@ -97,7 +98,7 @@ export default function FilePreviewScreen({ route }: Props) {
           </View>
         ) : (
           <View style={styles.center}>
-            <Text style={styles.bigIcon}>📄</Text>
+            <Ionicons name="document-outline" size={56} color="#f2f3f5" style={styles.bigIcon} />
             <Text style={styles.fileName}>{name}</Text>
             <Text style={styles.hint}>
               Preview isn't available for this file type. Download to open it.
@@ -114,7 +115,10 @@ export default function FilePreviewScreen({ route }: Props) {
         {downloading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.downloadBtnText}>⇩ Download / Share</Text>
+          <View style={styles.btnRow}>
+            <Ionicons name="arrow-down-outline" size={16} color="#fff" />
+            <Text style={styles.downloadBtnText}>Download / Share</Text>
+          </View>
         )}
       </TouchableOpacity>
     </View>
@@ -128,6 +132,7 @@ const styles = StyleSheet.create({
   video: { width: "100%", height: 300 },
   center: { alignItems: "center", padding: 24 },
   bigIcon: { fontSize: 56, marginBottom: 12 },
+  btnRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   fileName: { color: "#f2f3f5", fontSize: 15, textAlign: "center" },
   hint: { color: "#8a8f98", fontSize: 13, textAlign: "center", marginTop: 8 },
   downloadBtn: {

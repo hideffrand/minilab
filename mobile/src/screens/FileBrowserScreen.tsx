@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
 import { createClient } from "../api/client";
@@ -178,7 +179,12 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
       onPress={() => openEntry(item)}
       onLongPress={() => onLongPress(item)}
     >
-      <Text style={styles.icon}>{item.isDir ? "📁" : "📄"}</Text>
+      <Ionicons
+        name={item.isDir ? "folder-outline" : "document-outline"}
+        size={22}
+        color="#8a8f98"
+        style={styles.icon}
+      />
       <View style={{ flex: 1 }}>
         <Text style={styles.name} numberOfLines={1}>
           {item.name}
@@ -211,10 +217,16 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
           <Text style={styles.toolbarBtnText}>+ Folder</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.toolbarBtn} onPress={handleUpload}>
-          <Text style={styles.toolbarBtnText}>⇧ Upload</Text>
+          <View style={styles.btnRow}>
+            <Ionicons name="arrow-up-outline" size={14} color="#e5e7eb" />
+            <Text style={styles.toolbarBtnText}>Upload</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.toolbarBtn} onPress={() => navigation.navigate("ServerStats")}>
-          <Text style={styles.toolbarBtnText}>📊 Stats</Text>
+          <View style={styles.btnRow}>
+            <Ionicons name="stats-chart-outline" size={14} color="#e5e7eb" />
+            <Text style={styles.toolbarBtnText}>Stats</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.toolbarBtn} onPress={onRefresh}>
           <Text style={styles.toolbarBtnText}>⟳ Refresh</Text>
@@ -352,6 +364,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 20,
   },
+  btnRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   toolbarBtnText: { color: "#e5e7eb", fontSize: 13, fontWeight: "600" },
   busyBar: {
     flexDirection: "row",

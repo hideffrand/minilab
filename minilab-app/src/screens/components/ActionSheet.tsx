@@ -1,0 +1,84 @@
+import React from "react";
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
+
+export interface Action {
+  label: string;
+  destructive?: boolean;
+  onPress: () => void;
+}
+
+interface Props {
+  visible: boolean;
+  title?: string;
+  actions: Action[];
+  onCancel: () => void;
+}
+
+// Android's Alert supports at most 3 buttons, so long-press menus with more
+// options can't use Alert. This modal works on both platforms.
+export default function ActionSheet({ visible, title, actions, onCancel }: Props) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+      <TouchableOpacity
+        style={styles.backdrop}
+        activeOpacity={1}
+        onPress={onCancel}
+      >
+        <View style={styles.sheet}>
+          {title ? <Text style={styles.title} numberOfLines={1}>{title}</Text> : null}
+          <ScrollView bounces={false}>
+            {actions.map((a) => (
+              <TouchableOpacity
+                key={a.label}
+                style={styles.row}
+                onPress={a.onPress}
+              >
+                <Text style={[styles.rowText, a.destructive && styles.destructive]}>
+                  {a.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <TouchableOpacity style={[styles.row, styles.cancelRow]} onPress={onCancel}>
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  sheet: {
+    backgroundColor: "#161920",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingBottom: 28,
+    maxHeight: "70%",
+  },
+  title: { color: "#8a8f98", fontSize: 13, textAlign: "center", marginVertical: 8 },
+  row: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginVertical: 3,
+  },
+  rowText: { color: "#f2f3f5", fontSize: 16, textAlign: "center" },
+  destructive: { color: "#f87171" },
+  cancelRow: { backgroundColor: "#1c1f26", marginTop: 6 },
+  cancelText: { color: "#f2f3f5", fontSize: 16, fontWeight: "600", textAlign: "center" },
+});

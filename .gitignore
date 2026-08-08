@@ -1,0 +1,9 @@
+node_modules/
+.env
+.DS_Store
+*.log
+
+minilab-app/.expo/
+minilab-app/dist/
+
+minilab-backend/dist/

@@ -213,6 +213,9 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
         <TouchableOpacity style={styles.toolbarBtn} onPress={handleUpload}>
           <Text style={styles.toolbarBtnText}>⇧ Upload</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.toolbarBtn} onPress={() => navigation.navigate("ServerStats")}>
+          <Text style={styles.toolbarBtnText}>📊 Stats</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.toolbarBtn} onPress={onRefresh}>
           <Text style={styles.toolbarBtnText}>⟳ Refresh</Text>
         </TouchableOpacity>

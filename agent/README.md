@@ -73,6 +73,9 @@ source ~/.minilab/config.env && ./minilab-backend -pair -name "Family Phone"
 - `POST /api/files/copy` — `{"src": "...", "dst": "..."}`
 - `POST /api/files/move` — `{"src": "...", "dst": "..."}`
 - `DELETE /api/files/delete` — `{"path": "..."}`
+- `GET  /api/system/stats` — system health snapshot: CPU %, memory, disk, load
+  average, uptime, process count, and CPU temperature (read straight from
+  `/proc` and sysfs, no external dependency)
 
 All paths are **relative to `MINILAB_ROOT_DIR`** and sanitized so they can
 never escape that folder (protection against path traversal `../`, absolute
@@ -82,7 +85,8 @@ read without a deadline).
 
 `rename` and `move` refuse to overwrite an existing destination file.
 
-All `/api/files/*` endpoints require the header `X-API-Key: <your api key>`.
+All `/api/files/*` and `/api/system/*` endpoints require the header
+`X-API-Key: <your api key>`.
 
 ## Manual Setup (if you don't want to use install.sh)
 

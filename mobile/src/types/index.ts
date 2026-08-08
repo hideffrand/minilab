@@ -35,3 +35,25 @@ export interface PairingPayload {
   baseUrl: string;
   apiKey: string;
 }
+
+/** Snapshot returned by the backend's GET /api/system/stats. */
+export interface SystemStats {
+  hostname: string;
+  os: string;
+  uptimeSeconds: number;
+  cpuPercent: number;
+  loadAvg: number[];
+  memory: {
+    totalBytes: number;
+    availableBytes: number;
+    usedPercent: number;
+  };
+  disk: {
+    totalBytes: number;
+    usedBytes: number;
+    availableBytes: number;
+    usedPercent: number;
+  };
+  processes: number;
+  tempsCelsius: number[];
+}

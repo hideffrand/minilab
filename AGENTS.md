@@ -38,7 +38,7 @@ Change the format in one → change the other. App code uses global `btoa`/`atob
 
 ## Security invariants (don't weaken)
 
-- All `/api/files/*` require header `X-API-Key` (constant-time compare, `internal/auth/middleware.go`). `GET /api/health` is public.
+- All `/api/files/*` require header `X-API-Key` (constant-time compare, `internal/auth/middleware.go`). `GET /api/health` is public. `GET /api/system/stats` (the system health snapshot, reads `/proc` + sysfs in `internal/system`) also requires the key — new `/api/system/*` endpoints must go through the same auth wrapper.
 - Every user path is sandboxed to `MINILAB_ROOT_DIR` via `internal/fsutil/path.go` `Resolve()` — blocks `..`, absolute paths, AND symlinks pointing outside root (existing-path symlinks are resolved and re-checked). Upload filenames go through `filepath.Base`. Keep this boundary intact; new endpoints must go through `Resolve`.
 - App stores device API keys in `expo-secure-store`, NOT AsyncStorage (`DevicesContext` writes them per-device under `minilab.apikey.<id>`). The AsyncStorage device list is keyless; `DevicesContext` migrates any legacy inline key on load.
 - `/api/files/preview` streams via `http.ServeContent` (HTTP Range support enables video scrubbing) — don't replace with a plain file handler.
@@ -51,4 +51,4 @@ Change the format in one → change the other. App code uses global `btoa`/`atob
 - App architecture: `src/api` (axios client + file ops), `src/context/DevicesContext.tsx` (persisted devices via AsyncStorage, API keys via SecureStore), `src/navigation/RootNavigator.tsx` (stack: DeviceList → AddDevice / FileBrowser → FilePreview, plus ScanQR), `src/screens/`, `src/screens/components/` (`PromptModal`, `ActionSheet`).
 - App is **Android-first** — don't add iOS-only APIs (no `ActionSheetIOS`, no iOS-only styling). Long-press menus use the custom `ActionSheet` component because Android's `Alert` caps at 3 buttons.
 - App downloads/uploads stream via `expo-file-system` (`downloadAsync`/`uploadAsync`), not axios, for large files.
-- Roadmap items in the READMEs (system health, power control, docker manager, fingerprint confirm tokens) are **not implemented** — don't assume they exist.
+- Roadmap items in the READMEs (power control, docker manager, fingerprint confirm tokens) are **not implemented** — don't assume they exist.

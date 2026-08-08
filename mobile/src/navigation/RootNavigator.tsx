@@ -7,6 +7,7 @@ import AddDeviceScreen from "../screens/AddDeviceScreen";
 import ScanQRScreen from "../screens/ScanQRScreen";
 import FileBrowserScreen from "../screens/FileBrowserScreen";
 import FilePreviewScreen from "../screens/FilePreviewScreen";
+import ServerStatsScreen from "../screens/ServerStatsScreen";
 import { useDevices } from "../context/DevicesContext";
 
 export type RootStackParamList = {
@@ -15,6 +16,7 @@ export type RootStackParamList = {
   ScanQR: undefined;
   FileBrowser: { path: string } | undefined;
   FilePreview: { path: string; name: string };
+  ServerStats: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -71,6 +73,11 @@ export default function RootNavigator() {
           name="FilePreview"
           component={FilePreviewScreen}
           options={({ route }) => ({ title: route.params.name })}
+        />
+        <Stack.Screen
+          name="ServerStats"
+          component={ServerStatsScreen}
+          options={{ title: "Server Stats" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

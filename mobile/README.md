@@ -23,6 +23,9 @@ Expo + React Native + TypeScript. Typecheck-clean (`npx tsc --noEmit`).
 - **File Preview**: preview images & videos (streaming, with seek support
   because the backend uses HTTP Range); other files can be downloaded and
   shared (share sheet) to other apps on the phone.
+- **System Health Monitor**: live dashboard of the server's CPU, memory,
+  disk, load average, uptime, process count, and temperature — auto-refreshes
+  every few seconds, reachable from the 📊 Stats button in the File Browser.
 
 ## How to distribute to other people (no coding needed)
 
@@ -103,20 +106,18 @@ eas build --platform android
 
 In line with your original feature list, my suggested order for the next features:
 
-1. **System Health Monitor** — new backend Go endpoints (read `/proc`
-   directly, no external dependency) + a dashboard in the app.
-2. **Power Control & Wake-on-LAN** — `POST /api/power/reboot` and
+1. **Power Control & Wake-on-LAN** — `POST /api/power/reboot` and
    `/shutdown` endpoints, plus a WoL magic packet sent from the app side (UDP
    broadcast, no backend needed since the point is to turn on a powered-off
    laptop).
-3. **Docker Manager** & **Systemd Service Control** — via the Unix socket
+2. **Docker Manager** & **Systemd Service Control** — via the Unix socket
    `/var/run/docker.sock` and `systemctl` (needs a restricted shell and a
    service whitelist to stay safe).
-4. **Custom Script Launcher** & **Remote Terminal/SSH** — the most sensitive;
+3. **Custom Script Launcher** & **Remote Terminal/SSH** — the most sensitive;
    Remote Terminal is best done with a real SSH client in the app connecting
    to your Mint SSH server (safer and more battle-tested than re-inventing a
    shell in the Go backend).
-5. A **fingerprint-gated confirm token** layer for all sensitive actions
+4. A **fingerprint-gated confirm token** layer for all sensitive actions
    (delete, power control, restart service, etc.) — see the note in the
    backend README.
 

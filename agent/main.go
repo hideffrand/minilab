@@ -12,6 +12,7 @@ import (
 	"minilab-backend/internal/config"
 	"minilab-backend/internal/files"
 	"minilab-backend/internal/pairing"
+	"minilab-backend/internal/system"
 )
 
 func main() {
@@ -37,15 +38,23 @@ func main() {
 	fileHandler.Register(fileMux)
 	protectedFiles := auth.RequireAPIKey(cfg.APIKey, fileMux)
 
+	// System stats are sensitive (they read the host), so they get the same
+	// API key check, on their own /api/system/ mux.
+	systemMux := http.NewServeMux()
+	sysHandler := system.NewHandler(cfg.RootDir)
+	sysHandler.Register(systemMux)
+	protectedSystem := auth.RequireAPIKey(cfg.APIKey, systemMux)
+
 	// Outer mux: health check stays public so the app (and you, with curl)
 	// can verify the server is reachable without a key; everything under
-	// /api/files/ requires the key.
+	// /api/files/ and /api/system/ requires the key.
 	outer := http.NewServeMux()
 	outer.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 	outer.Handle("/api/files/", protectedFiles)
+	outer.Handle("/api/system/", protectedSystem)
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

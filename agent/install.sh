@@ -166,6 +166,26 @@ else
   echo "  source $CONFIG_FILE && $BIN_PATH"
 fi
 
+# Optional: grant passwordless sudo so the app's Reboot/Shutdown buttons work.
+# The backend runs as $USER, so this rule must match the service user. Only
+# the two power commands are whitelisted — nothing else gets passwordless sudo.
+if confirm "Allow the app to reboot/shutdown this machine (needs sudo)?" "y/N"; then
+  SYSTEMCTL="$(command -v systemctl)"
+  if [[ -z "$SYSTEMCTL" ]]; then
+    echo "systemctl not found — power control not configured."
+  else
+    SUDOERS_FILE="/etc/sudoers.d/minilab-power"
+    sudo bash -c "printf '%s ALL=(ALL) NOPASSWD: %s reboot, %s poweroff\\n' \"$USER\" \"$SYSTEMCTL\" \"$SYSTEMCTL\" > $SUDOERS_FILE"
+    sudo chmod 440 "$SUDOERS_FILE"
+    if ! sudo visudo -cf "$SUDOERS_FILE"; then
+      sudo rm -f "$SUDOERS_FILE"
+      echo "Sudoers rule invalid — removed. Power control not configured."
+    else
+      echo "Power control enabled: passwordless sudo for $SYSTEMCTL reboot/poweroff."
+    fi
+  fi
+fi
+
 # Print the pairing code (QR + text) to scan or paste from the app
 say "Pairing Code"
 export MINILAB_ROOT_DIR MINILAB_API_KEY MINILAB_PORT

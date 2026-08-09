@@ -51,6 +51,12 @@ else
   echo "No systemd service installed — nothing to do."
 fi
 
+# Remove the passwordless-sudo rule that powered the app's Reboot/Shutdown.
+if [[ -f /etc/sudoers.d/minilab-power ]]; then
+  sudo rm -f /etc/sudoers.d/minilab-power
+  echo "Removed the power-control sudoers rule."
+fi
+
 # 2. Remove the built binary
 say "2/4 Remove the built binary"
 if [[ -f "$BIN_PATH" ]]; then

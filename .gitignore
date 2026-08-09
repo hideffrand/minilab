@@ -2,6 +2,7 @@ node_modules/
 .env
 .DS_Store
 *.log
+.codegraph/
 
 mobile/.expo/
 mobile/dist/

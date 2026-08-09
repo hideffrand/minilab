@@ -22,7 +22,7 @@ Dev server: `npx expo start` (Expo Go). No `package-lock.json` is committed; `no
 
 Server **refuses to start** without env: `MINILAB_ROOT_DIR` and `MINILAB_API_KEY` are required; `MINILAB_PORT` optional (default 8080).
 - One-shot setup + pairing: `./install.sh` (installs Go if missing, generates key, writes `~/.minilab/config.env` mode 600, optional systemd service, prints QR/pairing code).
-- Uninstall: `./uninstall.sh` (stops/removes the systemd service, removes the binary; asks before deleting the shared storage folder and `~/.minilab`).
+- Uninstall: `./uninstall.sh` (stops/removes the systemd service, removes the binary and `~/.minilab` config; lists the paired storage folder and only deletes it if the user picks that option AND types `DELETE` — never automatically).
 - Quick rerun after setup: `source ~/.minilab/config.env && go run .`
 - Regenerate pairing code any time: `./minilab-backend -pair -name "..."` (auto-detects Tailscale IP via `tailscale ip -4`).
 

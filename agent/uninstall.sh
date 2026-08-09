@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Minilab agent — one-command uninstall.
-# Removes the systemd service (if installed), the built binary, and
-# optionally the shared storage folder and the config folder (~/.minilab).
+# Removes the systemd service (if installed), the built binary, and the
+# config folder (~/.minilab). The storage folder is only deleted if the user
+# explicitly picks that option AND types DELETE — never automatically.
 set -euo pipefail
 
 CONFIG_DIR="$HOME/.minilab"
@@ -59,24 +60,43 @@ else
   echo "No binary found."
 fi
 
-# 3. Remove the shared storage folder (the user's files — requires typing the
-#    exact path, so an accidental Enter can never wipe data)
-say "3/4 Shared storage folder"
+# 3. The shared storage folder is never deleted automatically — it's your
+#    data. Uninstall only removes the service, binary, and config. The menu
+#    below lets you OPT IN to deleting the files, by number, and only after
+#    typing DELETE (an ambiguous "type the path" prompt is gone).
+say "3/4 Paired storage folder"
 if [[ -n "$STORAGE_DIR" && -d "$STORAGE_DIR" ]]; then
-  echo "Your files live in: $STORAGE_DIR"
-  echo "This step DELETES ALL FILES in that folder."
-  read -rp "Type the exact folder path above to delete it (anything else keeps it): " confirm_path
-  if [[ "$confirm_path" == "$STORAGE_DIR" ]]; then
-    rm -rf "$STORAGE_DIR"
-    echo "Removed: $STORAGE_DIR"
-  else
-    echo "Kept: $STORAGE_DIR"
-  fi
+  echo
+  echo "Paired folders:"
+  echo "  [1] $STORAGE_DIR"
+  echo
+  echo "What should uninstall do with the files in it?"
+  echo "  1) Keep all files — just uninstall (recommended)"
+  echo "  2) Uninstall AND permanently delete all files in [1]"
+  read -rp "Choose [1]: " choice
+  case "${choice:-1}" in
+    2)
+      echo
+      echo "WARNING: this permanently deletes everything in:"
+      echo "  $STORAGE_DIR"
+      read -rp "Type DELETE to confirm (anything else keeps the files): " confirm_word
+      if [[ "$confirm_word" == "DELETE" ]]; then
+        rm -rf "$STORAGE_DIR"
+        echo "Deleted: $STORAGE_DIR"
+      else
+        echo "Aborted — files kept."
+      fi
+      ;;
+    *)
+      echo "Keeping all files."
+      ;;
+  esac
 else
-  echo "No storage folder configured/found."
+  echo "No storage folder configured."
 fi
 
-# 4. Remove the config folder (API key + saved pairing codes)
+# 4. Remove the config folder (API key + saved pairing codes) — this is what
+#    "unpairs" the phones.
 say "4/4 Remove the config folder"
 if [[ -d "$CONFIG_DIR" ]]; then
   if confirm "Remove $CONFIG_DIR (config + API key + saved pairing codes)?" "Y/n"; then
@@ -92,6 +112,7 @@ fi
 cat <<EOF
 
 Uninstall complete.
+- If you chose "keep files", everything under the storage folder is untouched.
 - Existing pairing codes on phones stop working now that the service is
   stopped and the API key is deleted.
 - Go was left installed (it's a general tool). Remove it manually if you want:

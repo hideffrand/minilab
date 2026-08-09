@@ -54,9 +54,39 @@ fi
 
 # 3. Folder the app is allowed to manage
 say "3/8 Allowed folder"
-DEFAULT_ROOT="${MINILAB_ROOT_DIR:-$HOME/minilab-storage}"
-read -rp "Folder the app is allowed to manage [$DEFAULT_ROOT]: " ROOT_INPUT
-MINILAB_ROOT_DIR="${ROOT_INPUT:-$DEFAULT_ROOT}"
+echo "Note: the app gets full read/write/delete access to whatever folder you pick."
+
+if [[ -n "${MINILAB_ROOT_DIR:-}" && -d "${MINILAB_ROOT_DIR:-}" ]]; then
+  echo "Current root dir (from previous config): $MINILAB_ROOT_DIR"
+  if ! confirm "Use this folder again?" "Y/n"; then
+    MINILAB_ROOT_DIR=""
+  fi
+fi
+
+if [[ -z "${MINILAB_ROOT_DIR:-}" ]]; then
+  SUGGESTIONS=()
+  for d in Documents Downloads Pictures Music Videos Desktop; do
+    if [[ -d "$HOME/$d" ]]; then
+      SUGGESTIONS+=("$HOME/$d")
+    fi
+  done
+  CUSTOM_OPTION=$(( ${#SUGGESTIONS[@]} + 1 ))
+
+  echo
+  echo "Pick the folder the app is allowed to manage:"
+  for i in "${!SUGGESTIONS[@]}"; do
+    echo "  $((i+1))) ${SUGGESTIONS[$i]}"
+  done
+  echo "  $CUSTOM_OPTION) Type a custom path"
+  read -rp "Choice [$CUSTOM_OPTION]: " CHOICE
+  if [[ "$CHOICE" =~ ^[0-9]+$ ]] && (( CHOICE >= 1 && CHOICE <= ${#SUGGESTIONS[@]} )); then
+    MINILAB_ROOT_DIR="${SUGGESTIONS[$((CHOICE-1))]}"
+    echo "Using: $MINILAB_ROOT_DIR"
+  else
+    read -rp "Custom path (the app may access this folder): " ROOT_INPUT
+    MINILAB_ROOT_DIR="${ROOT_INPUT:-$HOME/minilab-storage}"
+  fi
+fi
 mkdir -p "$MINILAB_ROOT_DIR"
 echo "Root dir: $MINILAB_ROOT_DIR"
 

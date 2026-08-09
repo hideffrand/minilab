@@ -14,9 +14,11 @@ cd agent
 ```
 
 This script automatically:
-- Installs Go via `apt` if it's missing (asks for permission first)
+- Install Go via `apt` if it's missing (asks for permission first)
 - Generates a random API key
-- Asks which folder the app is allowed to manage (default `~/minilab-storage`)
+- Asks which folder the app is allowed to manage — it suggests common folders
+  it found on your system (Documents, Downloads, Pictures, …) as numbered
+  options, or you can type any custom path
 - Builds the binary
 - Detects the IP (Tailscale first, otherwise the LAN IP automatically)
 - Optionally installs it as a systemd service (auto-start on boot)
@@ -159,13 +161,26 @@ cd agent
 ./uninstall.sh
 ```
 
-It asks before touching anything destructive and removes, in order:
+It removes, in order:
 1. **systemd service** — stops, disables, and deletes
    `/etc/systemd/system/minilab-backend.service` (skipped if never installed).
 2. **Built binary** — `agent/minilab-backend`.
-3. **Shared storage folder** (`MINILAB_ROOT_DIR`) — only deleted if you type
-   the exact folder path (an accidental Enter never wipes your files).
-4. **Config folder** `~/.minilab/` — API key + saved pairing codes.
+3. **Config folder** `~/.minilab/` — API key + saved pairing codes (this is
+   what un-pairs the phones).
+
+**Your files are untouched by default.** The script lists the paired storage
+folder and asks, by number, whether to keep the files or delete them too:
+
+```
+Paired folders:
+  [1] /home/you/minilab-storage
+What should uninstall do with the files in it?
+  1) Keep all files — just uninstall (recommended)
+  2) Uninstall AND permanently delete all files in [1]
+```
+
+If you pick option 2, it still asks you to type **DELETE** before anything is
+removed — an accidental Enter can never wipe your files.
 
 Existing pairing codes on phones stop working once the service is stopped and
 the API key is deleted. Go itself is left installed (it's a general tool);
@@ -182,7 +197,9 @@ sudo rm -f /etc/systemd/system/minilab-backend.service
 sudo systemctl daemon-reload
 rm -f /home/you/agent/minilab-backend
 rm -rf ~/.minilab            # config + API key + saved pairing codes
-rm -rf /home/you/minilab-storage   # ONLY if you want to delete your files too
+# Your files under MINILAB_ROOT_DIR are untouched — delete them only if you
+# deliberately want them gone:
+# rm -rf /home/you/minilab-storage
 ```
 
 ## Security notes

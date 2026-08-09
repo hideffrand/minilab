@@ -72,9 +72,9 @@ cd agent
 ./uninstall.sh
 ```
 
-It stops the service, deletes the program, and asks before removing your
-config and your files. You can also uninstall manually — see
-`agent/README.md`.
+It stops the service, deletes the program, and removes the config (API key)
+— which un-pairs the phones. **Your files are never touched.** You can also
+uninstall manually — see `agent/README.md`.
 
 ### Remove the app
 

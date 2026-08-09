@@ -10,6 +10,8 @@ on your router.
   delete, and preview photos & videos right from your phone.
 - **System Health** — a live dashboard of your server's CPU, memory, disk,
   load, uptime, and temperature.
+- **Power Control** — reboot or shut down your machine from the app, guarded
+  by a type-to-confirm step so a stray tap can't do damage.
 
 ## How it works (the short version)
 
@@ -38,8 +40,8 @@ cd agent
 ```
 
 The script walks you through everything: picks the folder the app may
-access, generates a secret key, and finishes by printing a **QR code +
-pairing code** in your terminal.
+access, generates a secret key, optionally allows reboot/shutdown from the
+app, and finishes by printing a **QR code + pairing code** in your terminal.
 
 ### 2. Set up the app (on your phone)
 
@@ -56,10 +58,14 @@ health.
 
 ## Features
 
+- **Dashboard**: opens straight on the system health overview of your
+  selected device — CPU, memory, disk, load average, uptime, temperature —
+  auto-refreshing. With more than one device connected, tap the chips at the
+  top to switch which machine you're looking at.
 - **Files**: list folders, upload/download, rename/copy/move/delete,
   preview images, videos and audio, share files to other apps.
-- **System health**: CPU, memory, disk, load average, uptime, temperature —
-  refreshes automatically.
+- **Power**: reboot or shut down the selected machine; the app asks you to
+  type a random text token before anything happens.
 - **Multiple servers**: keep several servers/devices in the app and switch
   between them anytime.
 

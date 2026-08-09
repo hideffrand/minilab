@@ -22,6 +22,10 @@ This script automatically:
 - Builds the binary
 - Detects the IP (Tailscale first, otherwise the LAN IP automatically)
 - Optionally installs it as a systemd service (auto-start on boot)
+- Optionally grants **passwordless sudo for just `systemctl reboot` and
+  `systemctl poweroff`** so the app's Reboot/Shutdown buttons work — a scoped
+  rule in `/etc/sudoers.d/minilab-power` (validated with `visudo -cf`), nothing
+  else gets sudo
 - **Prints the QR code + pairing code text** in the terminal
 
 Configuration is stored at `~/.minilab/config.env` (mode 600), and the last
@@ -78,6 +82,10 @@ source ~/.minilab/config.env && ./minilab-backend -pair -name "Family Phone"
 - `GET  /api/system/stats` — system health snapshot: CPU %, memory, disk, load
   average, uptime, process count, and CPU temperature (read straight from
   `/proc` and sysfs, no external dependency)
+- `POST /api/system/reboot` — restart the machine. Requires the passwordless
+  sudo rule from `install.sh` (or a local console session for `loginctl`).
+- `POST /api/system/shutdown` — power the machine off. Same requirement as
+  reboot.
 
 All paths are **relative to `MINILAB_ROOT_DIR`** and sanitized so they can
 never escape that folder (protection against path traversal `../`, absolute
@@ -164,8 +172,10 @@ cd agent
 It removes, in order:
 1. **systemd service** — stops, disables, and deletes
    `/etc/systemd/system/minilab-backend.service` (skipped if never installed).
-2. **Built binary** — `agent/minilab-backend`.
-3. **Config folder** `~/.minilab/` — API key + saved pairing codes (this is
+2. **Power-control sudoers rule** — removes `/etc/sudoers.d/minilab-power`
+   (the passwordless-sudo rule that powered the Reboot/Shutdown buttons).
+3. **Built binary** — `agent/minilab-backend`.
+4. **Config folder** `~/.minilab/` — API key + saved pairing codes (this is
    what un-pairs the phones).
 
 **Your files are untouched by default.** The script lists the paired storage
@@ -195,6 +205,7 @@ sudo systemctl stop minilab-backend 2>/dev/null || true
 sudo systemctl disable minilab-backend 2>/dev/null || true
 sudo rm -f /etc/systemd/system/minilab-backend.service
 sudo systemctl daemon-reload
+sudo rm -f /etc/sudoers.d/minilab-power
 rm -f /home/you/agent/minilab-backend
 rm -rf ~/.minilab            # config + API key + saved pairing codes
 # Your files under MINILAB_ROOT_DIR are untouched — delete them only if you
@@ -206,7 +217,8 @@ rm -rf ~/.minilab            # config + API key + saved pairing codes
 
 - Store `MINILAB_API_KEY` (and the pairing code/QR, since it contains the API
   key) safely — anyone with it can read/write/delete all files inside
-  `MINILAB_ROOT_DIR`. `install.sh` stores it at `~/.minilab/config.env` with
+  `MINILAB_ROOT_DIR`, and, if power control is enabled, reboot or shut down
+  the machine. `install.sh` stores it at `~/.minilab/config.env` with
   permission `600` (and the `~/.minilab` folder itself is `700`). Don't
   screenshot the QR/code in the terminal and save it carelessly either.
 - All file endpoints are sandboxed to `MINILAB_ROOT_DIR`: path traversal
@@ -215,12 +227,18 @@ rm -rf ~/.minilab            # config + API key + saved pairing codes
   manipulated path.
 - Filesystem errors (e.g. messages containing local paths) are not leaked to
   the client — the client only gets a generic message.
+- The app guards Reboot/Shutdown with a **type-to-confirm modal** (a random
+  token must be typed before the request is sent). That's a UI guard against
+  accidental taps, not a security boundary — anyone holding the API key can
+  still call `POST /api/system/reboot` directly.
 - This version uses a simple API key in the header for auth. If you later want
-  to add a "fingerprint-gated" layer for sensitive operations (delete, etc.),
-  the suggested pattern is:
-  1. The RN app runs a local biometric check (via `expo-local-authentication`).
+  to add a device-lock / biometric layer for sensitive operations, the
+  suggested pattern is:
+  1. The RN app runs a local lock check (pin/fingerprint via
+     `expo-local-authentication`).
   2. On success, the app sends the request with an extra `X-Confirm-Token`
      header (short-lived, e.g. HMAC of timestamp + API key).
   3. A new middleware in the backend validates that token for specific
-     endpoints (`delete`, `chmod`, etc.).
-  This isn't implemented yet — just say the word if you want it.
+     endpoints (`/api/system/reboot`, `/api/system/shutdown`, delete, etc.).
+  This isn't implemented yet — the app's type-to-confirm modal is the
+  placeholder, and the same gate is where the device lock would slot in.

@@ -23,9 +23,16 @@ Expo + React Native + TypeScript. Typecheck-clean (`npx tsc --noEmit`).
 - **File Preview**: preview images & videos (streaming, with seek support
   because the backend uses HTTP Range); other files can be downloaded and
   shared (share sheet) to other apps on the phone.
-- **System Health Monitor**: live dashboard of the server's CPU, memory,
-  disk, load average, uptime, process count, and temperature — auto-refreshes
-  every few seconds, reachable from the 📊 Stats button in the File Browser.
+- **Home dashboard (first screen)**: live system health — CPU, memory, disk,
+  load average, uptime, process count, and temperature — auto-refreshing
+  every few seconds, with the selected device's name in the header.
+- **Device switcher**: with more than one device paired, a row of chips at
+  the top of the dashboard switches which machine you're viewing (tap to
+  switch, "+" to add another).
+- **Power Control**: Reboot and Shutdown buttons on the dashboard. Each is
+  guarded by a type-to-confirm modal — the app shows a random token
+  (e.g. `RAVEN-HARBOR-42`) and the Confirm button stays disabled until it's
+  typed, GitHub-style.
 
 ## How to distribute to other people (no coding needed)
 
@@ -83,12 +90,14 @@ they don't need to share a network).
 
 ```
 src/
-  api/             axios client + API functions (list, upload, etc.)
+  api/             axios client + API functions (list, upload, system/power, etc.)
   context/         DevicesContext — saved devices (AsyncStorage) &
                    each device's API key (expo-secure-store)
-  navigation/      React Navigation stack (DeviceList → AddDevice / FileBrowser → FilePreview)
-  screens/         DeviceListScreen, AddDeviceScreen, FileBrowserScreen, FilePreviewScreen
-  screens/components/  PromptModal (input dialog), ActionSheet (long-press menu, Android-safe)
+  navigation/      React Navigation stack (DeviceList → Home → FileBrowser → FilePreview)
+  screens/         HomeScreen (dashboard: stats + device switcher + power),
+                   DeviceListScreen, AddDeviceScreen, FileBrowserScreen, FilePreviewScreen
+  screens/components/  PromptModal (input dialog), ActionSheet (long-press menu,
+                   Android-safe), TypeToConfirmModal (type-a-token power confirm)
   utils/           encode/decode pairing code (must stay in sync with internal/pairing in the backend)
   types/           shared TypeScript types
 ```
@@ -104,12 +113,12 @@ eas build --platform android
 
 ## Next-feature roadmap (not implemented yet)
 
-In line with your original feature list, my suggested order for the next features:
+Reboot/shutdown power control is done (dashboard buttons + type-to-confirm).
+What's still ahead, in suggested order:
 
-1. **Power Control & Wake-on-LAN** — `POST /api/power/reboot` and
-   `/shutdown` endpoints, plus a WoL magic packet sent from the app side (UDP
-   broadcast, no backend needed since the point is to turn on a powered-off
-   laptop).
+1. **Wake-on-LAN** — a UDP magic packet sent from the app to turn on a
+   powered-off machine (no backend needed — the point is to wake a machine
+   that's off).
 2. **Docker Manager** & **Systemd Service Control** — via the Unix socket
    `/var/run/docker.sock` and `systemctl` (needs a restricted shell and a
    service whitelist to stay safe).
@@ -117,8 +126,8 @@ In line with your original feature list, my suggested order for the next feature
    Remote Terminal is best done with a real SSH client in the app connecting
    to your Mint SSH server (safer and more battle-tested than re-inventing a
    shell in the Go backend).
-4. A **fingerprint-gated confirm token** layer for all sensitive actions
-   (delete, power control, restart service, etc.) — see the note in the
-   backend README.
-
-Just say the word if you want to move on to any of these.
+4. **Device-lock confirm** — replace (or gate on top of) the type-to-confirm
+   modal with the phone's own lock: pin/fingerprint via
+   `expo-local-authentication`, plus a short-lived `X-Confirm-Token` the
+   backend validates for sensitive endpoints — see the note in the backend
+   README.

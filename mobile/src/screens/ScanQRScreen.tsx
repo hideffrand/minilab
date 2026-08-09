@@ -41,7 +41,7 @@ export default function ScanQRScreen({ navigation }: Props) {
       const client = createClient({ baseUrl: payload.baseUrl, apiKey: payload.apiKey });
       await client.get("/api/files/list", { params: { path: "" } });
       await addDevice(payload);
-      navigation.replace("FileBrowser", { path: "" });
+      navigation.replace("Home");
     } catch (e: any) {
       const status = e?.response?.status;
       const msg =

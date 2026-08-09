@@ -96,7 +96,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
           apiKey: apiKey.trim(),
         });
       }
-      navigation.navigate("FileBrowser", { path: "" });
+      navigation.navigate("Home");
     } catch (e: any) {
       const status = e?.response?.status;
       if (status === 401) {

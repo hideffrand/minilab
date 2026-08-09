@@ -6,18 +6,18 @@ import { Ionicons } from "@expo/vector-icons";
 import DeviceListScreen from "../screens/DeviceListScreen";
 import AddDeviceScreen from "../screens/AddDeviceScreen";
 import ScanQRScreen from "../screens/ScanQRScreen";
+import HomeScreen from "../screens/HomeScreen";
 import FileBrowserScreen from "../screens/FileBrowserScreen";
 import FilePreviewScreen from "../screens/FilePreviewScreen";
-import ServerStatsScreen from "../screens/ServerStatsScreen";
 import { useDevices } from "../context/DevicesContext";
 
 export type RootStackParamList = {
   DeviceList: undefined;
   AddDevice: { editDeviceId?: string } | undefined;
   ScanQR: undefined;
+  Home: undefined;
   FileBrowser: { path: string } | undefined;
   FilePreview: { path: string; name: string };
-  ServerStats: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -41,7 +41,7 @@ export default function RootNavigator() {
 
   return (
     <NavigationContainer theme={theme}>
-      <Stack.Navigator initialRouteName={activeDevice ? "FileBrowser" : "DeviceList"}>
+      <Stack.Navigator initialRouteName={activeDevice ? "Home" : "DeviceList"}>
         <Stack.Screen
           name="DeviceList"
           component={DeviceListScreen}
@@ -58,14 +58,26 @@ export default function RootNavigator() {
           options={{ title: "Scan QR", presentation: "fullScreenModal" }}
         />
         <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={({ navigation }) => ({
+            title: activeDevice?.name ?? "Minilab",
+            headerRight: () => (
+              <TouchableOpacity onPress={() => navigation.navigate("DeviceList")}>
+                <Ionicons name="list" size={22} color="#3b82f6" />
+              </TouchableOpacity>
+            ),
+          })}
+        />
+        <Stack.Screen
           name="FileBrowser"
           component={FileBrowserScreen}
           initialParams={{ path: "" }}
           options={({ navigation }) => ({
             title: activeDevice?.name ?? "Files",
             headerRight: () => (
-              <TouchableOpacity onPress={() => navigation.navigate("DeviceList")}>
-                <Ionicons name="desktop-outline" size={22} color="#3b82f6" />
+              <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+                <Ionicons name="home-outline" size={22} color="#3b82f6" />
               </TouchableOpacity>
             ),
           })}
@@ -74,11 +86,6 @@ export default function RootNavigator() {
           name="FilePreview"
           component={FilePreviewScreen}
           options={({ route }) => ({ title: route.params.name })}
-        />
-        <Stack.Screen
-          name="ServerStats"
-          component={ServerStatsScreen}
-          options={{ title: "Server Stats" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

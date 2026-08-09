@@ -20,7 +20,7 @@ export default function DeviceListScreen({ navigation }: Props) {
 
   const openDevice = async (device: DeviceProfile) => {
     await setActiveDeviceId(device.id);
-    navigation.navigate("FileBrowser", { path: "" });
+    navigation.navigate("Home");
   };
 
   const onLongPress = (device: DeviceProfile) => {

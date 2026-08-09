@@ -222,10 +222,10 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
             <Text style={styles.toolbarBtnText}>Upload</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.toolbarBtn} onPress={() => navigation.navigate("ServerStats")}>
+        <TouchableOpacity style={styles.toolbarBtn} onPress={() => navigation.navigate("Home")}>
           <View style={styles.btnRow}>
             <Ionicons name="stats-chart-outline" size={14} color="#e5e7eb" />
-            <Text style={styles.toolbarBtnText}>Stats</Text>
+            <Text style={styles.toolbarBtnText}>Home</Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.toolbarBtn} onPress={onRefresh}>

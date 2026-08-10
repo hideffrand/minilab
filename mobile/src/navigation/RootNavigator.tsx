@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { View, TouchableOpacity } from "react-native";
-import { NavigationContainer, DarkTheme, DefaultTheme } from "@react-navigation/native";
+import { NavigationContainer, NavigationContainerRef, DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
+import { useShareIntentContext } from "expo-share-intent";
 import DeviceListScreen from "../screens/DeviceListScreen";
 import AddDeviceScreen from "../screens/AddDeviceScreen";
 import ScanQRScreen from "../screens/ScanQRScreen";
@@ -10,6 +11,7 @@ import HomeScreen from "../screens/HomeScreen";
 import FileBrowserScreen from "../screens/FileBrowserScreen";
 import FilePreviewScreen from "../screens/FilePreviewScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import ShareUploadScreen from "../screens/ShareUploadScreen";
 import { useDevices } from "../context/DevicesContext";
 import { useTheme } from "../context/ThemeContext";
 
@@ -21,13 +23,31 @@ export type RootStackParamList = {
   FileBrowser: { path: string } | undefined;
   FilePreview: { path: string; name: string };
   Settings: undefined;
+  ShareUpload: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+// Pushes the ShareUpload modal whenever the app is opened from a system
+// share sheet (e.g. gallery → share → Minilab).
+function ShareIntentGate({
+  navigationRef,
+}: {
+  navigationRef: React.RefObject<NavigationContainerRef<RootStackParamList>>;
+}) {
+  const { hasShareIntent } = useShareIntentContext();
+  useEffect(() => {
+    if (hasShareIntent) {
+      navigationRef.current?.navigate("ShareUpload");
+    }
+  }, [hasShareIntent, navigationRef]);
+  return null;
+}
+
 export default function RootNavigator() {
   const { loading, activeDevice } = useDevices();
   const { mode, colors } = useTheme();
+  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   if (loading) return null;
 
@@ -45,7 +65,8 @@ export default function RootNavigator() {
   };
 
   return (
-    <NavigationContainer theme={theme}>
+    <NavigationContainer ref={navigationRef} theme={theme}>
+      <ShareIntentGate navigationRef={navigationRef} />
       <Stack.Navigator initialRouteName={activeDevice ? "Home" : "DeviceList"}>
         <Stack.Screen
           name="DeviceList"
@@ -101,6 +122,11 @@ export default function RootNavigator() {
           name="Settings"
           component={SettingsScreen}
           options={{ title: "Settings" }}
+        />
+        <Stack.Screen
+          name="ShareUpload"
+          component={ShareUploadScreen}
+          options={{ title: "Upload to Minilab", presentation: "modal" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

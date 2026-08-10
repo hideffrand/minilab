@@ -11,7 +11,8 @@ on your router.
 - **System Health** — a live dashboard of your server's CPU, memory, disk,
   load, uptime, and temperature.
 - **Power Control** — reboot or shut down your machine from the app, guarded
-  by a type-to-confirm step so a stray tap can't do damage.
+  by your phone's fingerprint/PIN (with a type-to-confirm fallback) so a
+  stray tap — or a leaked API key — can't do damage.
 
 ## How it works (the short version)
 

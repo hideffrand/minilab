@@ -1,30 +1,32 @@
 # AGENTS.md
 
-Monorepo-lite of two **independent** projects, tracked by one root git repo (no CI, no tests anywhere):
+Monorepo-lite of two **independent** projects, tracked by one root git repo (no CI, no lint):
 
 - `mobile/` — Expo (SDK 51) + React Native 0.74 + TypeScript mobile app.
 - `agent/` — Go 1.22+ HTTP API. Only external dep: `go-qrcode` (used solely for the terminal QR in `-pair` mode).
 
 ## Verify / build
 
-Backend (no env vars needed for build/vet):
+Backend (no env vars needed for build/vet/test):
 ```bash
-cd agent && go vet ./... && go build -o minilab-backend .
+cd agent && go vet ./... && go test ./... && go build -o minilab-backend .
 ```
+Only Go test so far: `internal/system/stats_test.go`.
 
-App — no lint/test scripts exist. Only verification is the typecheck:
+App — no lint script. Typecheck is the real gate; a jest suite exists too:
 ```bash
 cd mobile && npm install && npx tsc --noEmit
+npm test   # jest-expo; single component test in __tests__/
 ```
-Dev server: `npx expo start` (Expo Go). No `package-lock.json` is committed; `node_modules` not installed by default.
+`jest.setup.js` mocks AsyncStorage/SecureStore/clipboard/font — don't add test setup elsewhere. `package-lock.json` IS committed. Dev server: `npx expo start` (Expo Go).
 
 ## Backend runtime (gotcha)
 
 Server **refuses to start** without env: `MINILAB_ROOT_DIR` and `MINILAB_API_KEY` are required; `MINILAB_PORT` optional (default 8080).
-- One-shot setup + pairing: `./install.sh` (installs Go if missing, generates key, writes `~/.minilab/config.env` mode 600, optional systemd service, prints QR/pairing code).
-- Uninstall: `./uninstall.sh` (stops/removes the systemd service, removes the binary and `~/.minilab` config; lists the paired storage folder and only deletes it if the user picks that option AND types `DELETE` — never automatically).
+- One-shot setup + pairing: `./install.sh` (installs Go if missing, generates key, writes `~/.minilab/config.env` mode 600, optional systemd service, optionally adds a scoped passwordless-sudo rule for `systemctl reboot`/`poweroff` in `/etc/sudoers.d/minilab-power`, prints QR/pairing code).
+- Uninstall: `./uninstall.sh` (stops/removes the systemd service and sudoers rule, removes the binary and `~/.minilab` config; lists the paired storage folder and only deletes it if the user picks that option AND types `DELETE` — never automatically).
 - Quick rerun after setup: `source ~/.minilab/config.env && go run .`
-- Regenerate pairing code any time: `./minilab-backend -pair -name "..."` (auto-detects Tailscale IP via `tailscale ip -4`).
+- Regenerate pairing code any time: `./minilab-backend -pair -name "..." [-host <ip>]` (auto-detects Tailscale IP via `tailscale ip -4`, falls back to LAN IP, then `127.0.0.1`).
 
 Go 1.22 method-routing patterns are used (`mux.HandleFunc("GET /api/files/list", ...)`) — won't compile on older Go.
 
@@ -38,17 +40,28 @@ Change the format in one → change the other. App code uses global `btoa`/`atob
 
 ## Security invariants (don't weaken)
 
-- All `/api/files/*` require header `X-API-Key` (constant-time compare, `internal/auth/middleware.go`). `GET /api/health` is public. `GET /api/system/stats` (the system health snapshot, reads `/proc` + sysfs in `internal/system`) also requires the key — new `/api/system/*` endpoints must go through the same auth wrapper.
+- All `/api/files/*` and `/api/system/*` require header `X-API-Key` (constant-time compare, `internal/auth/middleware.go`). `GET /api/health` is public. New `/api/system/*` endpoints must go through the same auth wrapper (they read the host).
 - Every user path is sandboxed to `MINILAB_ROOT_DIR` via `internal/fsutil/path.go` `Resolve()` — blocks `..`, absolute paths, AND symlinks pointing outside root (existing-path symlinks are resolved and re-checked). Upload filenames go through `filepath.Base`. Keep this boundary intact; new endpoints must go through `Resolve`.
 - App stores device API keys in `expo-secure-store`, NOT AsyncStorage (`DevicesContext` writes them per-device under `minilab.apikey.<id>`). The AsyncStorage device list is keyless; `DevicesContext` migrates any legacy inline key on load.
 - `/api/files/preview` streams via `http.ServeContent` (HTTP Range support enables video scrubbing) — don't replace with a plain file handler.
 - Max upload 2 GiB (`MaxUploadBytes`). Backend serves at most `MINILAB_ROOT_DIR`; a pairing code contains the API key and must be treated like a password. `install.sh` keeps `~/.minilab/` at 700 and `last-pairing-code.txt` at 600.
+- The app talks **plain HTTP** (`http://...`, no TLS) to LAN/Tailscale IPs. `app.json` sets Android `usesCleartextTraffic: true` via the `expo-build-properties` plugin — don't remove it or pairing/preview breaks.
 
 ## Conventions
 
 - All paths are root-relative, forward-slashed (see `fsutil.ToRelative` and app `src/types/index.ts` `FileEntry`).
 - UI text, error messages, READMEs, and install.sh prompts are in English — keep new user-facing strings English.
-- App architecture: `src/api` (axios client + file ops), `src/context/DevicesContext.tsx` (persisted devices via AsyncStorage, API keys via SecureStore), `src/navigation/RootNavigator.tsx` (stack: DeviceList → AddDevice / FileBrowser → FilePreview, plus ScanQR), `src/screens/`, `src/screens/components/` (`PromptModal`, `ActionSheet`).
+- App architecture: `src/api` (axios client + file ops + system/power), `src/context/DevicesContext.tsx` (persisted devices via AsyncStorage, API keys via SecureStore) and `ThemeContext.tsx` (dark/light, persisted in AsyncStorage key `minilab.theme.v1`), `src/navigation/RootNavigator.tsx`, `src/screens/`, `src/screens/components/` (`PromptModal`, `ActionSheet`, `TypeToConfirmModal`).
+- Navigation: initial route is **Home** when a device is active, else **DeviceList**. Stack: DeviceList → AddDevice / ScanQR, Home → FileBrowser → FilePreview / Settings. New screens must pull colors from `useTheme()` (theme-aware), not hardcode.
 - App is **Android-first** — don't add iOS-only APIs (no `ActionSheetIOS`, no iOS-only styling). Long-press menus use the custom `ActionSheet` component because Android's `Alert` caps at 3 buttons.
 - App downloads/uploads stream via `expo-file-system` (`downloadAsync`/`uploadAsync`), not axios, for large files.
-- Roadmap items in the READMEs (power control, docker manager, fingerprint confirm tokens) are **not implemented** — don't assume they exist.
+- Power control (reboot/shutdown from Home) IS implemented. It's gated by the
+  phone's device lock (fingerprint/PIN via `expo-local-authentication`, in
+  `mobile/src/utils/biometricAuth.ts`; type-to-confirm fallback when the phone
+  has no lock set) AND a short-lived single-use `X-Confirm-Token`: the app
+  calls `POST /api/system/confirm-token` right before the power request, and
+  the backend consumes that token in `agent/internal/system/confirm.go`
+  (`issue`/`consume`), so a leaked API key or replayed request alone can't
+  reboot/shutdown the machine. Power still relies on the passwordless-sudo
+  rule for the actual `systemctl reboot`/`poweroff`.
+- NOT implemented — don't assume they exist: docker manager, systemd service control, wake-on-LAN, remote terminal/SSH.

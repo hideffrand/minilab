@@ -8,9 +8,17 @@ export async function getSystemStats(client: AxiosInstance): Promise<SystemStats
 
 export type PowerAction = "reboot" | "shutdown";
 
+export async function getConfirmToken(client: AxiosInstance): Promise<string> {
+  const res = await client.post<{ token: string }>("/api/system/confirm-token");
+  return res.data.token;
+}
+
 export async function powerAction(
   client: AxiosInstance,
-  action: PowerAction
+  action: PowerAction,
+  confirmToken: string
 ): Promise<void> {
-  await client.post(`/api/system/${action}`);
+  await client.post(`/api/system/${action}`, null, {
+    headers: { "X-Confirm-Token": confirmToken },
+  });
 }

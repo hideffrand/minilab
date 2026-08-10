@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
 import { Ionicons } from "@expo/vector-icons";
+import { ShareIntentProvider } from "expo-share-intent";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import { DevicesProvider } from "./src/context/DevicesContext";
 import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
@@ -31,7 +32,9 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <AppShell />
+      <ShareIntentProvider>
+        <AppShell />
+      </ShareIntentProvider>
     </ThemeProvider>
   );
 }

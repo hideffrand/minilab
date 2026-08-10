@@ -30,9 +30,11 @@ Expo + React Native + TypeScript. Typecheck-clean (`npx tsc --noEmit`).
   the top of the dashboard switches which machine you're viewing (tap to
   switch, "+" to add another).
 - **Power Control**: Reboot and Shutdown buttons on the dashboard. Each is
-  guarded by a type-to-confirm modal — the app shows a random token
-  (e.g. `RAVEN-HARBOR-42`) and the Confirm button stays disabled until it's
-  typed, GitHub-style.
+  guarded by the phone's device lock — confirm, then unlock with your
+  fingerprint/PIN (system prompt). If the phone has no lock set, it falls back
+  to a type-to-confirm modal — a random token (e.g. `RAVEN-HARBOR-42`) must be
+  typed before the request is sent. The backend also requires a short-lived
+  single-use confirm token, so the API key alone can't trigger a power action.
 - **Settings → Preferences → Appearance**: switch between Dark and Light
   theme. The choice is persisted on the device (AsyncStorage) and applies
   app-wide — screens, modals, headers, and the status bar.
@@ -180,8 +182,9 @@ Then pair as usual: **Add Device → Scan QR** (point at the backend's
 
 ## Next-feature roadmap (not implemented yet)
 
-Reboot/shutdown power control is done (dashboard buttons + type-to-confirm).
-What's still ahead, in suggested order:
+Reboot/shutdown power control is done (dashboard buttons, gated by the phone's
+device lock — fingerprint/PIN — with a type-to-confirm fallback when the phone
+has no lock set). What's still ahead, in suggested order:
 
 1. **Wake-on-LAN** — a UDP magic packet sent from the app to turn on a
    powered-off machine (no backend needed — the point is to wake a machine
@@ -193,8 +196,3 @@ What's still ahead, in suggested order:
    Remote Terminal is best done with a real SSH client in the app connecting
    to your Mint SSH server (safer and more battle-tested than re-inventing a
    shell in the Go backend).
-4. **Device-lock confirm** — replace (or gate on top of) the type-to-confirm
-   modal with the phone's own lock: pin/fingerprint via
-   `expo-local-authentication`, plus a short-lived `X-Confirm-Token` the
-   backend validates for sensitive endpoints — see the note in the backend
-   README.

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Minilab Control",
+    "name": "Minilab",
     "slug": "minilab",
     "version": "1.0.1",
     "orientation": "portrait",
@@ -21,7 +21,7 @@
     },
     "android": {
       "package": "com.minilab.control",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#111318"
@@ -49,6 +49,14 @@
           "android": {
             "usesCleartextTraffic": true
           }
+        }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "disableIOS": true,
+          "androidIntentFilters": ["image/*", "video/*"],
+          "androidMultiIntentFilters": ["image/*", "video/*"]
         }
       ]
     ],

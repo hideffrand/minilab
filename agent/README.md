@@ -82,8 +82,11 @@ source ~/.minilab/config.env && ./minilab-backend -pair -name "Family Phone"
 - `GET  /api/system/stats` — system health snapshot: CPU %, memory, disk, load
   average, uptime, process count, and CPU temperature (read straight from
   `/proc` and sysfs, no external dependency)
-- `POST /api/system/reboot` — restart the machine. Requires the passwordless
-  sudo rule from `install.sh` (or a local console session for `loginctl`).
+- `POST /api/system/confirm-token` — issue a short-lived (60s), single-use
+  confirm token used to authorize the power endpoints below.
+- `POST /api/system/reboot` — restart the machine. Requires a valid
+  `X-Confirm-Token` header (see above) plus the passwordless sudo rule from
+  `install.sh` (or a local console session for `loginctl`).
 - `POST /api/system/shutdown` — power the machine off. Same requirement as
   reboot.
 
@@ -227,18 +230,10 @@ rm -rf ~/.minilab            # config + API key + saved pairing codes
   manipulated path.
 - Filesystem errors (e.g. messages containing local paths) are not leaked to
   the client — the client only gets a generic message.
-- The app guards Reboot/Shutdown with a **type-to-confirm modal** (a random
-  token must be typed before the request is sent). That's a UI guard against
-  accidental taps, not a security boundary — anyone holding the API key can
-  still call `POST /api/system/reboot` directly.
-- This version uses a simple API key in the header for auth. If you later want
-  to add a device-lock / biometric layer for sensitive operations, the
-  suggested pattern is:
-  1. The RN app runs a local lock check (pin/fingerprint via
-     `expo-local-authentication`).
-  2. On success, the app sends the request with an extra `X-Confirm-Token`
-     header (short-lived, e.g. HMAC of timestamp + API key).
-  3. A new middleware in the backend validates that token for specific
-     endpoints (`/api/system/reboot`, `/api/system/shutdown`, delete, etc.).
-  This isn't implemented yet — the app's type-to-confirm modal is the
-  placeholder, and the same gate is where the device lock would slot in.
+- The app gates Reboot/Shutdown behind the phone's device lock: the user must
+  authenticate with their fingerprint/PIN (via `expo-local-authentication`)
+  before the request is sent, and phones without a lock fall back to the
+  **type-to-confirm modal**. That gate is enforced end-to-end: the power
+  endpoints require a short-lived, single-use `X-Confirm-Token` issued by
+  `POST /api/system/confirm-token` and consumed by the backend. A leaked API
+  key or a replayed request alone can't reboot or shut down the machine.

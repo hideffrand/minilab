@@ -18,8 +18,9 @@ import { useDevices } from "../context/DevicesContext";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../context/ThemeContext";
 import { createClient } from "../api/client";
-import { getSystemStats, powerAction, PowerAction } from "../api/system";
+import { getConfirmToken, getSystemStats, powerAction, PowerAction } from "../api/system";
 import { SystemStats } from "../types";
+import { biometricAuthAvailable, authenticateWithDeviceLock } from "../utils/biometricAuth";
 import TypeToConfirmModal from "./components/TypeToConfirmModal";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
@@ -417,6 +418,7 @@ export default function HomeScreen({ navigation }: Props) {
 
   const [powerAction_, setPowerAction_] = useState<PowerAction | null>(null);
   const [powerToken, setPowerToken] = useState("");
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [powerBusy, setPowerBusy] = useState(false);
   const [powerExpanded, setPowerExpanded] = useState(false);
 
@@ -445,8 +447,9 @@ export default function HomeScreen({ navigation }: Props) {
     load();
   };
 
-  const openPower = (action: PowerAction) => {
+  const openPower = async (action: PowerAction) => {
     setPowerToken(makeConfirmToken());
+    setBiometricAvailable(await biometricAuthAvailable());
     setPowerAction_(action);
   };
 
@@ -455,7 +458,16 @@ export default function HomeScreen({ navigation }: Props) {
     setPowerBusy(true);
     const action = powerAction_;
     try {
-      await powerAction(client, action);
+      if (
+        biometricAvailable &&
+        !(await authenticateWithDeviceLock(
+          action === "reboot" ? "Confirm reboot" : "Confirm shutdown"
+        ))
+      ) {
+        return;
+      }
+      const confirmToken = await getConfirmToken(client);
+      await powerAction(client, action, confirmToken);
       setPowerAction_(null);
       Alert.alert(
         action === "reboot" ? "Rebooting" : "Shutting down",
@@ -599,11 +611,12 @@ export default function HomeScreen({ navigation }: Props) {
         visible={!!powerAction_}
         title={powerAction_ === "reboot" ? "Reboot device?" : "Shut down device?"}
         message={
-          powerAction_ === "reboot"
+          (powerAction_ === "reboot"
             ? "This will restart the machine. Any unsaved work on it will be lost."
-            : "This will power the machine off. It stays off until someone starts it again."
+            : "This will power the machine off. It stays off until someone starts it again.") +
+          (biometricAvailable ? " Confirm with your device lock to proceed." : "")
         }
-        token={powerToken}
+        token={biometricAvailable ? undefined : powerToken}
         busy={powerBusy}
         confirmLabel={powerAction_ === "reboot" ? "Reboot" : "Shutdown"}
         onCancel={() => setPowerAction_(null)}

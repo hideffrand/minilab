@@ -15,16 +15,17 @@ interface Props {
   visible: boolean;
   title: string;
   message: string;
-  token: string;
+  token?: string;
   busy?: boolean;
   confirmLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
 }
 
-// GitHub-style "type the random text to confirm" guard for destructive
-// actions. The confirm button stays disabled until the user types the
-// exact token shown to them.
+// Confirm modal for destructive actions. With a `token` it's a GitHub-style
+// "type the random text to confirm" guard: the confirm button stays disabled
+// until the exact token is typed. Without one it's a plain confirm dialog
+// (used when the device lock prompt handles the actual gate).
 export default function TypeToConfirmModal({
   visible,
   title,
@@ -43,7 +44,7 @@ export default function TypeToConfirmModal({
     if (visible) setValue("");
   }, [visible, token]);
 
-  const matches = value.trim().toUpperCase() === token.toUpperCase();
+  const matches = !token || value.trim().toUpperCase() === token.toUpperCase();
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
@@ -54,18 +55,22 @@ export default function TypeToConfirmModal({
         <View style={styles.card}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
-          <Text style={styles.token}>{token}</Text>
-          <TextInput
-            style={styles.input}
-            value={value}
-            onChangeText={setValue}
-            placeholder="Type the text above"
-            placeholderTextColor={colors.textSecondary}
-            autoFocus
-            autoCapitalize="characters"
-            autoCorrect={false}
-            editable={!busy}
-          />
+          {token && (
+            <>
+              <Text style={styles.token}>{token}</Text>
+              <TextInput
+                style={styles.input}
+                value={value}
+                onChangeText={setValue}
+                placeholder="Type the text above"
+                placeholderTextColor={colors.textSecondary}
+                autoFocus
+                autoCapitalize="characters"
+                autoCorrect={false}
+                editable={!busy}
+              />
+            </>
+          )}
           <View style={styles.row}>
             <TouchableOpacity style={styles.btn} onPress={onCancel} disabled={busy}>
               <Text style={styles.btnText}>Cancel</Text>

@@ -14,6 +14,8 @@ import * as Sharing from "expo-sharing";
 import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
+import { useTheme } from "../context/ThemeContext";
+import { ThemeColors } from "../context/ThemeContext";
 import { fileUrl } from "../api/client";
 import { downloadFile } from "../api/files";
 
@@ -31,6 +33,8 @@ function extOf(name: string): string {
 export default function FilePreviewScreen({ route }: Props) {
   const { path, name } = route.params;
   const { activeDevice } = useDevices();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const ext = extOf(name);
   const previewUri = activeDevice ? fileUrl(activeDevice, "preview", path) : "";
 
@@ -84,7 +88,7 @@ export default function FilePreviewScreen({ route }: Props) {
           />
         ) : AUDIO_EXT.includes(ext) ? (
           <View style={styles.center}>
-            <Ionicons name="musical-notes-outline" size={56} color="#f2f3f5" style={styles.bigIcon} />
+            <Ionicons name="musical-notes-outline" size={56} color={colors.text} style={styles.bigIcon} />
             <Video
               source={{
                 uri: previewUri,
@@ -98,7 +102,7 @@ export default function FilePreviewScreen({ route }: Props) {
           </View>
         ) : (
           <View style={styles.center}>
-            <Ionicons name="document-outline" size={56} color="#f2f3f5" style={styles.bigIcon} />
+            <Ionicons name="document-outline" size={56} color={colors.text} style={styles.bigIcon} />
             <Text style={styles.fileName}>{name}</Text>
             <Text style={styles.hint}>
               Preview isn't available for this file type. Download to open it.
@@ -113,10 +117,10 @@ export default function FilePreviewScreen({ route }: Props) {
         disabled={downloading}
       >
         {downloading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.onPrimary} />
         ) : (
           <View style={styles.btnRow}>
-            <Ionicons name="arrow-down-outline" size={16} color="#fff" />
+            <Ionicons name="arrow-down-outline" size={16} color={colors.onPrimary} />
             <Text style={styles.downloadBtnText}>Download / Share</Text>
           </View>
         )}
@@ -125,22 +129,24 @@ export default function FilePreviewScreen({ route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#111318" },
-  previewArea: { flex: 1, alignItems: "center", justifyContent: "center" },
-  image: { width: "100%", height: "100%" },
-  video: { width: "100%", height: 300 },
-  center: { alignItems: "center", padding: 24 },
-  bigIcon: { fontSize: 56, marginBottom: 12 },
-  btnRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  fileName: { color: "#f2f3f5", fontSize: 15, textAlign: "center" },
-  hint: { color: "#8a8f98", fontSize: 13, textAlign: "center", marginTop: 8 },
-  downloadBtn: {
-    backgroundColor: "#3b82f6",
-    margin: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  downloadBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    previewArea: { flex: 1, alignItems: "center", justifyContent: "center" },
+    image: { width: "100%", height: "100%" },
+    video: { width: "100%", height: 300 },
+    center: { alignItems: "center", padding: 24 },
+    bigIcon: { fontSize: 56, marginBottom: 12 },
+    btnRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    fileName: { color: colors.text, fontSize: 15, textAlign: "center" },
+    hint: { color: colors.textSecondary, fontSize: 13, textAlign: "center", marginTop: 8 },
+    downloadBtn: {
+      backgroundColor: colors.primary,
+      margin: 16,
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: "center",
+    },
+    downloadBtnText: { color: colors.onPrimary, fontWeight: "700", fontSize: 15 },
+  });
+}

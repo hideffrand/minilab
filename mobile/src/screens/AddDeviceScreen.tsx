@@ -16,6 +16,8 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
+import { useTheme } from "../context/ThemeContext";
+import { ThemeColors } from "../context/ThemeContext";
 import { createClient } from "../api/client";
 import { decodePairingCode } from "../utils/pairingCode";
 
@@ -25,6 +27,8 @@ type Mode = "paste" | "manual";
 
 export default function AddDeviceScreen({ route, navigation }: Props) {
   const { devices, addDevice, updateDevice } = useDevices();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const editDeviceId = route.params?.editDeviceId;
   const editing = devices.find((d) => d.id === editDeviceId) ?? null;
 
@@ -164,7 +168,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               onPress={() => navigation.navigate("ScanQR")}
             >
               <View style={styles.btnRow}>
-                <Ionicons name="qr-code-outline" size={18} color="#fff" />
+                <Ionicons name="qr-code-outline" size={18} color={colors.onPrimary} />
                 <Text style={styles.scanBtnText}>Scan QR Code</Text>
               </View>
             </TouchableOpacity>
@@ -176,7 +180,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               value={pairingCode}
               onChangeText={setPairingCode}
               placeholder="MINILAB1:xxxxxxxxxxxx..."
-              placeholderTextColor="#6b7280"
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
               multiline
@@ -186,7 +190,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               onPress={pasteFromClipboard}
             >
               <View style={styles.btnRow}>
-                <Ionicons name="clipboard-outline" size={16} color="#e5e7eb" />
+                <Ionicons name="clipboard-outline" size={16} color={colors.textLighter} />
                 <Text style={styles.secondaryBtnText}>
                   Paste from Clipboard
                 </Text>
@@ -208,7 +212,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               value={name}
               onChangeText={setName}
               placeholder="e.g. Bedroom Laptop"
-              placeholderTextColor="#6b7280"
+              placeholderTextColor={colors.textMuted}
             />
 
             <Text style={styles.label}>Server URL (Tailscale IP + port)</Text>
@@ -217,7 +221,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               value={baseUrl}
               onChangeText={setBaseUrl}
               placeholder="http://100.x.x.x:8080"
-              placeholderTextColor="#6b7280"
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="url"
@@ -229,7 +233,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               value={apiKey}
               onChangeText={setApiKey}
               placeholder="MINILAB_API_KEY from the backend"
-              placeholderTextColor="#6b7280"
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
               secureTextEntry
@@ -241,7 +245,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               disabled={testing}
             >
               {testing ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={colors.onPrimary} />
               ) : (
                 <Text style={styles.saveBtnText}>Test & Save</Text>
               )}
@@ -253,63 +257,65 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#111318" },
-  tabRow: {
-    flexDirection: "row",
-    backgroundColor: "#1c1f26",
-    borderRadius: 10,
-    padding: 4,
-    marginBottom: 20,
-  },
-  tab: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: "center" },
-  tabActive: { backgroundColor: "#3b82f6" },
-  tabText: { color: "#8a8f98", fontWeight: "600" },
-  tabTextActive: { color: "#fff" },
-  label: { color: "#9ca3af", fontSize: 13, marginTop: 16, marginBottom: 6 },
-  input: {
-    backgroundColor: "#1c1f26",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: "#fff",
-    fontSize: 15,
-  },
-  codeInput: { minHeight: 90, textAlignVertical: "top" },
-  hint: { color: "#8a8f98", fontSize: 13, lineHeight: 19, marginBottom: 16 },
-  scanBtn: {
-    backgroundColor: "#3b82f6",
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  btnRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  scanBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  orDivider: {
-    color: "#6b7280",
-    fontSize: 12,
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  mono: {
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    color: "#e5e7eb",
-  },
-  secondaryBtn: {
-    backgroundColor: "#2a2e37",
-    marginTop: 12,
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  secondaryBtnText: { color: "#e5e7eb", fontWeight: "600" },
-  saveBtn: {
-    backgroundColor: "#3b82f6",
-    marginTop: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  saveBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    tabRow: {
+      flexDirection: "row",
+      backgroundColor: colors.card,
+      borderRadius: 10,
+      padding: 4,
+      marginBottom: 20,
+    },
+    tab: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: "center" },
+    tabActive: { backgroundColor: colors.primary },
+    tabText: { color: colors.textSecondary, fontWeight: "600" },
+    tabTextActive: { color: colors.onPrimary },
+    label: { color: colors.textSoft, fontSize: 13, marginTop: 16, marginBottom: 6 },
+    input: {
+      backgroundColor: colors.card,
+      borderRadius: 10,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 15,
+    },
+    codeInput: { minHeight: 90, textAlignVertical: "top" },
+    hint: { color: colors.textSecondary, fontSize: 13, lineHeight: 19, marginBottom: 16 },
+    scanBtn: {
+      backgroundColor: colors.primary,
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    btnRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+    scanBtnText: { color: colors.onPrimary, fontWeight: "700", fontSize: 15 },
+    orDivider: {
+      color: colors.textMuted,
+      fontSize: 12,
+      textAlign: "center",
+      marginBottom: 12,
+    },
+    mono: {
+      fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+      color: colors.textLighter,
+    },
+    secondaryBtn: {
+      backgroundColor: colors.surface,
+      marginTop: 12,
+      paddingVertical: 12,
+      borderRadius: 10,
+      alignItems: "center",
+    },
+    secondaryBtnText: { color: colors.textLighter, fontWeight: "600" },
+    saveBtn: {
+      backgroundColor: colors.primary,
+      marginTop: 16,
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: "center",
+    },
+    saveBtnText: { color: colors.onPrimary, fontWeight: "700", fontSize: 15 },
+  });
+}

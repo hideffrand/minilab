@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { ThemeContext, ThemeColors, darkColors } from "../context/ThemeContext";
 
 interface Props {
   children: React.ReactNode;
@@ -24,41 +25,51 @@ export default class ErrorBoundary extends React.Component<Props, State> {
   }
 
   render() {
-    if (this.state.error) {
+    const error = this.state.error;
+    if (error) {
       return (
-        <View style={styles.container}>
-          <Text style={styles.title}>Something went wrong</Text>
-          <Text style={styles.message}>
-            {String(this.state.error.message || this.state.error)}
-          </Text>
-          <TouchableOpacity
-            style={styles.btn}
-            onPress={() => this.setState({ error: null })}
-          >
-            <Text style={styles.btnText}>Reload</Text>
-          </TouchableOpacity>
-        </View>
+        <ThemeContext.Consumer>
+          {(ctx) => {
+            const styles = makeStyles(ctx?.colors ?? darkColors);
+            return (
+              <View style={styles.container}>
+                <Text style={styles.title}>Something went wrong</Text>
+                <Text style={styles.message}>
+                  {String(error.message || error)}
+                </Text>
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={() => this.setState({ error: null })}
+                >
+                  <Text style={styles.btnText}>Reload</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          }}
+        </ThemeContext.Consumer>
       );
     }
     return this.props.children;
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#111318",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 32,
-  },
-  title: { color: "#f2f3f5", fontSize: 18, fontWeight: "700", marginBottom: 8 },
-  message: {
-    color: "#f87171",
-    fontSize: 13,
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  btn: { backgroundColor: "#3b82f6", paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10 },
-  btnText: { color: "#fff", fontWeight: "700" },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 32,
+    },
+    title: { color: colors.text, fontSize: 18, fontWeight: "700", marginBottom: 8 },
+    message: {
+      color: colors.dangerText,
+      fontSize: 13,
+      textAlign: "center",
+      marginBottom: 20,
+    },
+    btn: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10 },
+    btnText: { color: colors.onPrimary, fontWeight: "700" },
+  });
+}

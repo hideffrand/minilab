@@ -1,6 +1,6 @@
 import React from "react";
-import { TouchableOpacity } from "react-native";
-import { NavigationContainer, DarkTheme } from "@react-navigation/native";
+import { View, TouchableOpacity } from "react-native";
+import { NavigationContainer, DarkTheme, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import DeviceListScreen from "../screens/DeviceListScreen";
@@ -9,7 +9,9 @@ import ScanQRScreen from "../screens/ScanQRScreen";
 import HomeScreen from "../screens/HomeScreen";
 import FileBrowserScreen from "../screens/FileBrowserScreen";
 import FilePreviewScreen from "../screens/FilePreviewScreen";
+import SettingsScreen from "../screens/SettingsScreen";
 import { useDevices } from "../context/DevicesContext";
+import { useTheme } from "../context/ThemeContext";
 
 export type RootStackParamList = {
   DeviceList: undefined;
@@ -18,26 +20,29 @@ export type RootStackParamList = {
   Home: undefined;
   FileBrowser: { path: string } | undefined;
   FilePreview: { path: string; name: string };
+  Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const theme = {
-  ...DarkTheme,
-  colors: {
-    ...DarkTheme.colors,
-    background: "#111318",
-    card: "#161920",
-    text: "#f2f3f5",
-    border: "#242832",
-    primary: "#3b82f6",
-  },
-};
-
 export default function RootNavigator() {
   const { loading, activeDevice } = useDevices();
+  const { mode, colors } = useTheme();
 
   if (loading) return null;
+
+  const base = mode === "dark" ? DarkTheme : DefaultTheme;
+  const theme = {
+    ...base,
+    colors: {
+      ...base.colors,
+      background: colors.background,
+      card: colors.cardAlt,
+      text: colors.text,
+      border: colors.border,
+      primary: colors.primary,
+    },
+  };
 
   return (
     <NavigationContainer theme={theme}>
@@ -63,9 +68,14 @@ export default function RootNavigator() {
           options={({ navigation }) => ({
             title: activeDevice?.name ?? "Minilab",
             headerRight: () => (
-              <TouchableOpacity onPress={() => navigation.navigate("DeviceList")}>
-                <Ionicons name="list" size={22} color="#3b82f6" />
-              </TouchableOpacity>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
+                <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
+                  <Ionicons name="settings-outline" size={22} color={colors.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate("DeviceList")}>
+                  <Ionicons name="list" size={22} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
             ),
           })}
         />
@@ -77,7 +87,7 @@ export default function RootNavigator() {
             title: activeDevice?.name ?? "Files",
             headerRight: () => (
               <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-                <Ionicons name="home-outline" size={22} color="#3b82f6" />
+                <Ionicons name="home-outline" size={22} color={colors.primary} />
               </TouchableOpacity>
             ),
           })}
@@ -86,6 +96,11 @@ export default function RootNavigator() {
           name="FilePreview"
           component={FilePreviewScreen}
           options={({ route }) => ({ title: route.params.name })}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ title: "Settings" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { useTheme, ThemeColors } from "../../context/ThemeContext";
 
 interface Props {
   visible: boolean;
@@ -29,6 +30,8 @@ export default function PromptModal({
   onCancel,
   onConfirm,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [value, setValue] = useState(initialValue);
 
   useEffect(() => {
@@ -48,7 +51,7 @@ export default function PromptModal({
             value={value}
             onChangeText={setValue}
             placeholder={placeholder}
-            placeholderTextColor="#8a8f98"
+            placeholderTextColor={colors.textSecondary}
             autoFocus
             autoCapitalize="none"
             autoCorrect={false}
@@ -72,30 +75,32 @@ export default function PromptModal({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    padding: 24,
-  },
-  card: {
-    backgroundColor: "#1c1f26",
-    borderRadius: 14,
-    padding: 20,
-  },
-  title: { color: "#fff", fontSize: 16, fontWeight: "600", marginBottom: 12 },
-  input: {
-    backgroundColor: "#2a2e37",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: "#fff",
-    fontSize: 15,
-  },
-  row: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16, gap: 12 },
-  btn: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 8 },
-  btnPrimary: { backgroundColor: "#3b82f6" },
-  btnText: { color: "#c7cbd3", fontSize: 15 },
-  btnPrimaryText: { color: "#fff", fontWeight: "600" },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: "center",
+      padding: 24,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: 14,
+      padding: 20,
+    },
+    title: { color: colors.text, fontSize: 16, fontWeight: "600", marginBottom: 12 },
+    input: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: colors.text,
+      fontSize: 15,
+    },
+    row: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16, gap: 12 },
+    btn: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 8 },
+    btnPrimary: { backgroundColor: colors.primary },
+    btnText: { color: colors.textDim, fontSize: 15 },
+    btnPrimaryText: { color: colors.onPrimary, fontWeight: "600" },
+  });
+}

@@ -5,7 +5,22 @@ import { useFonts } from "expo-font";
 import { Ionicons } from "@expo/vector-icons";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import { DevicesProvider } from "./src/context/DevicesContext";
+import { ThemeProvider, useTheme } from "./src/context/ThemeContext";
 import RootNavigator from "./src/navigation/RootNavigator";
+
+function AppShell() {
+  const { mode } = useTheme();
+  return (
+    <SafeAreaProvider>
+      <ErrorBoundary>
+        <DevicesProvider>
+          <StatusBar style={mode === "dark" ? "light" : "dark"} />
+          <RootNavigator />
+        </DevicesProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
+  );
+}
 
 export default function App() {
   // Load the icon font once, up front. @expo/vector-icons lazy-loads it
@@ -15,13 +30,8 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <SafeAreaProvider>
-      <ErrorBoundary>
-        <DevicesProvider>
-          <StatusBar style="light" />
-          <RootNavigator />
-        </DevicesProvider>
-      </ErrorBoundary>
-    </SafeAreaProvider>
+    <ThemeProvider>
+      <AppShell />
+    </ThemeProvider>
   );
 }

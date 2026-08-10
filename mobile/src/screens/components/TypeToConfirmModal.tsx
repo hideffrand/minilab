@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { useTheme, ThemeColors } from "../../context/ThemeContext";
 
 interface Props {
   visible: boolean;
@@ -34,6 +35,8 @@ export default function TypeToConfirmModal({
   onCancel,
   onConfirm,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [value, setValue] = useState("");
 
   useEffect(() => {
@@ -57,7 +60,7 @@ export default function TypeToConfirmModal({
             value={value}
             onChangeText={setValue}
             placeholder="Type the text above"
-            placeholderTextColor="#8a8f98"
+            placeholderTextColor={colors.textSecondary}
             autoFocus
             autoCapitalize="characters"
             autoCorrect={false}
@@ -81,43 +84,45 @@ export default function TypeToConfirmModal({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    padding: 24,
-  },
-  card: {
-    backgroundColor: "#1c1f26",
-    borderRadius: 14,
-    padding: 20,
-  },
-  title: { color: "#fff", fontSize: 16, fontWeight: "600", marginBottom: 8 },
-  message: { color: "#8a8f98", fontSize: 14, lineHeight: 20, marginBottom: 12 },
-  token: {
-    color: "#f2f3f5",
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textAlign: "center",
-    backgroundColor: "#2a2e37",
-    borderRadius: 8,
-    paddingVertical: 12,
-    marginBottom: 12,
-  },
-  input: {
-    backgroundColor: "#2a2e37",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: "#fff",
-    fontSize: 15,
-  },
-  row: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16, gap: 12 },
-  btn: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 8 },
-  btnDanger: { backgroundColor: "#dc2626" },
-  btnDisabled: { opacity: 0.4 },
-  btnText: { color: "#c7cbd3", fontSize: 15 },
-  btnDangerText: { color: "#fff", fontWeight: "600" },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.overlay,
+      justifyContent: "center",
+      padding: 24,
+    },
+    card: {
+      backgroundColor: colors.card,
+      borderRadius: 14,
+      padding: 20,
+    },
+    title: { color: colors.text, fontSize: 16, fontWeight: "600", marginBottom: 8 },
+    message: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginBottom: 12 },
+    token: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: "700",
+      letterSpacing: 1,
+      textAlign: "center",
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      paddingVertical: 12,
+      marginBottom: 12,
+    },
+    input: {
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: colors.text,
+      fontSize: 15,
+    },
+    row: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16, gap: 12 },
+    btn: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 8 },
+    btnDanger: { backgroundColor: colors.danger },
+    btnDisabled: { opacity: 0.4 },
+    btnText: { color: colors.textDim, fontSize: 15 },
+    btnDangerText: { color: colors.onPrimary, fontWeight: "600" },
+  });
+}

@@ -11,12 +11,16 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
+import { useTheme } from "../context/ThemeContext";
+import { ThemeColors } from "../context/ThemeContext";
 import { DeviceProfile } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "DeviceList">;
 
 export default function DeviceListScreen({ navigation }: Props) {
   const { devices, activeDevice, setActiveDeviceId, removeDevice } = useDevices();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
 
   const openDevice = async (device: DeviceProfile) => {
     await setActiveDeviceId(device.id);
@@ -66,7 +70,7 @@ export default function DeviceListScreen({ navigation }: Props) {
               onPress={() => openDevice(item)}
               onLongPress={() => onLongPress(item)}
             >
-              <Ionicons name="desktop-outline" size={26} color="#f2f3f5" style={styles.cardIcon} />
+              <Ionicons name="desktop-outline" size={26} color={colors.text} style={styles.cardIcon} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.cardName}>{item.name}</Text>
                 <Text style={styles.cardUrl}>{item.baseUrl}</Text>
@@ -93,48 +97,50 @@ export default function DeviceListScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#111318" },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
-  emptyTitle: { color: "#f2f3f5", fontSize: 17, fontWeight: "700", marginBottom: 8 },
-  emptyHint: { color: "#8a8f98", fontSize: 14, textAlign: "center", lineHeight: 20 },
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1c1f26",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  cardActive: { borderColor: "#3b82f6" },
-  cardIcon: { fontSize: 26, marginRight: 14 },
-  cardName: { color: "#f2f3f5", fontSize: 16, fontWeight: "600" },
-  cardUrl: { color: "#8a8f98", fontSize: 12, marginTop: 2 },
-  activeBadge: {
-    color: "#3b82f6",
-    fontSize: 11,
-    fontWeight: "700",
-    backgroundColor: "#1e3a5f",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  addBtn: {
-    backgroundColor: "#3b82f6",
-    margin: 16,
-    marginTop: 0,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  addBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
-  hint: {
-    color: "#6b7280",
-    fontSize: 12,
-    textAlign: "center",
-    paddingBottom: 16,
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
+    emptyTitle: { color: colors.text, fontSize: 17, fontWeight: "700", marginBottom: 8 },
+    emptyHint: { color: colors.textSecondary, fontSize: 14, textAlign: "center", lineHeight: 20 },
+    card: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.card,
+      borderRadius: 14,
+      padding: 16,
+      marginBottom: 12,
+      borderWidth: 1,
+      borderColor: "transparent",
+    },
+    cardActive: { borderColor: colors.primary },
+    cardIcon: { fontSize: 26, marginRight: 14 },
+    cardName: { color: colors.text, fontSize: 16, fontWeight: "600" },
+    cardUrl: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
+    activeBadge: {
+      color: colors.primary,
+      fontSize: 11,
+      fontWeight: "700",
+      backgroundColor: colors.primarySoft,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 8,
+      overflow: "hidden",
+    },
+    addBtn: {
+      backgroundColor: colors.primary,
+      margin: 16,
+      marginTop: 0,
+      paddingVertical: 14,
+      borderRadius: 12,
+      alignItems: "center",
+    },
+    addBtnText: { color: colors.onPrimary, fontWeight: "700", fontSize: 15 },
+    hint: {
+      color: colors.textMuted,
+      fontSize: 12,
+      textAlign: "center",
+      paddingBottom: 16,
+    },
+  });
+}

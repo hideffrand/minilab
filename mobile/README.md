@@ -33,6 +33,9 @@ Expo + React Native + TypeScript. Typecheck-clean (`npx tsc --noEmit`).
   guarded by a type-to-confirm modal — the app shows a random token
   (e.g. `RAVEN-HARBOR-42`) and the Confirm button stays disabled until it's
   typed, GitHub-style.
+- **Settings → Preferences → Appearance**: switch between Dark and Light
+  theme. The choice is persisted on the device (AsyncStorage) and applies
+  app-wide — screens, modals, headers, and the status bar.
 
 ## How to distribute to other people (no coding needed)
 

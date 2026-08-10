@@ -2,6 +2,7 @@ import React from "react";
 import { create, act } from "react-test-renderer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { DevicesProvider } from "../src/context/DevicesContext";
+import { ThemeProvider } from "../src/context/ThemeContext";
 import AddDeviceScreen from "../src/screens/AddDeviceScreen";
 
 const navigation = {
@@ -22,9 +23,11 @@ describe("AddDeviceScreen", () => {
     let tree: any;
     act(() => {
       tree = create(
-        <DevicesProvider>
-          <AddDeviceScreen route={{ params: {} } as any} navigation={navigation} />
-        </DevicesProvider>
+        <ThemeProvider>
+          <DevicesProvider>
+            <AddDeviceScreen route={{ params: {} } as any} navigation={navigation} />
+          </DevicesProvider>
+        </ThemeProvider>
       );
     });
     expect(tree.toJSON()).toBeTruthy();
@@ -41,9 +44,11 @@ describe("AddDeviceScreen", () => {
     let tree: any;
     await act(async () => {
       tree = create(
-        <DevicesProvider>
-          <AddDeviceScreen route={{ params: { editDeviceId: "d1" } } as any} navigation={navigation} />
-        </DevicesProvider>
+        <ThemeProvider>
+          <DevicesProvider>
+            <AddDeviceScreen route={{ params: { editDeviceId: "d1" } } as any} navigation={navigation} />
+          </DevicesProvider>
+        </ThemeProvider>
       );
       await new Promise((r) => setTimeout(r, 0));
     });

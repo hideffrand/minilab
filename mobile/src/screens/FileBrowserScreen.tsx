@@ -15,6 +15,8 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
+import { useTheme } from "../context/ThemeContext";
+import { ThemeColors } from "../context/ThemeContext";
 import { createClient } from "../api/client";
 import {
   listFiles,
@@ -50,6 +52,8 @@ function joinPath(dir: string, name: string): string {
 export default function FileBrowserScreen({ route, navigation }: Props) {
   const currentPath = route.params?.path ?? "";
   const { activeDevice } = useDevices();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const client = activeDevice ? createClient(activeDevice) : null;
 
   const [entries, setEntries] = useState<FileEntry[]>([]);
@@ -182,7 +186,7 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
       <Ionicons
         name={item.isDir ? "folder-outline" : "document-outline"}
         size={22}
-        color="#8a8f98"
+        color={colors.textSecondary}
         style={styles.icon}
       />
       <View style={{ flex: 1 }}>
@@ -218,13 +222,13 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
         </TouchableOpacity>
         <TouchableOpacity style={styles.toolbarBtn} onPress={handleUpload}>
           <View style={styles.btnRow}>
-            <Ionicons name="arrow-up-outline" size={14} color="#e5e7eb" />
+            <Ionicons name="arrow-up-outline" size={14} color={colors.textLighter} />
             <Text style={styles.toolbarBtnText}>Upload</Text>
           </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.toolbarBtn} onPress={() => navigation.navigate("Home")}>
           <View style={styles.btnRow}>
-            <Ionicons name="stats-chart-outline" size={14} color="#e5e7eb" />
+            <Ionicons name="stats-chart-outline" size={14} color={colors.textLighter} />
             <Text style={styles.toolbarBtnText}>Home</Text>
           </View>
         </TouchableOpacity>
@@ -236,13 +240,13 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
 
       {busy && (
         <View style={styles.busyBar}>
-          <ActivityIndicator color="#fff" size="small" />
+          <ActivityIndicator color={colors.onPrimary} size="small" />
           <Text style={styles.busyText}>Processing...</Text>
         </View>
       )}
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color="#3b82f6" />
+        <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
       ) : error ? (
         <View style={styles.center}>
           <Text style={styles.errorText}>{error}</Text>
@@ -260,7 +264,7 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
           keyExtractor={(item) => item.path || item.name}
           renderItem={renderItem}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />
           }
         />
       )}
@@ -355,38 +359,40 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#111318" },
-  toolbar: { flexGrow: 0, paddingVertical: 10 },
-  toolbarBtn: {
-    backgroundColor: "#1c1f26",
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-  },
-  btnRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  toolbarBtnText: { color: "#e5e7eb", fontSize: 13, fontWeight: "600" },
-  busyBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingBottom: 8,
-  },
-  busyText: { color: "#9ca3af", fontSize: 12 },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#242832",
-  },
-  icon: { fontSize: 22, marginRight: 12 },
-  name: { color: "#f2f3f5", fontSize: 15, fontWeight: "500" },
-  meta: { color: "#8a8f98", fontSize: 12, marginTop: 2 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
-  errorText: { color: "#f87171", textAlign: "center", marginBottom: 12 },
-  emptyText: { color: "#6b7280" },
-  retryBtn: { backgroundColor: "#1c1f26", padding: 10, borderRadius: 8 },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    toolbar: { flexGrow: 0, paddingVertical: 10 },
+    toolbarBtn: {
+      backgroundColor: colors.card,
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      borderRadius: 20,
+    },
+    btnRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+    toolbarBtnText: { color: colors.textLighter, fontSize: 13, fontWeight: "600" },
+    busyBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingHorizontal: 12,
+      paddingBottom: 8,
+    },
+    busyText: { color: colors.textSoft, fontSize: 12 },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    icon: { fontSize: 22, marginRight: 12 },
+    name: { color: colors.text, fontSize: 15, fontWeight: "500" },
+    meta: { color: colors.textSecondary, fontSize: 12, marginTop: 2 },
+    center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
+    errorText: { color: colors.dangerText, textAlign: "center", marginBottom: 12 },
+    emptyText: { color: colors.textMuted },
+    retryBtn: { backgroundColor: colors.card, padding: 10, borderRadius: 8 },
+  });
+}

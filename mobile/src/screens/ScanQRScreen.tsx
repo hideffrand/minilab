@@ -11,6 +11,8 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
+import { useTheme } from "../context/ThemeContext";
+import { ThemeColors } from "../context/ThemeContext";
 import { createClient } from "../api/client";
 import { decodePairingCode } from "../utils/pairingCode";
 
@@ -18,6 +20,8 @@ type Props = NativeStackScreenProps<RootStackParamList, "ScanQR">;
 
 export default function ScanQRScreen({ navigation }: Props) {
   const { addDevice } = useDevices();
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [permission, requestPermission] = useCameraPermissions();
   const [locked, setLocked] = useState(false); // prevents double-scans while we process one
   const [connecting, setConnecting] = useState(false);
@@ -93,44 +97,46 @@ export default function ScanQRScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
-  center: { alignItems: "center", justifyContent: "center", padding: 32 },
-  permText: { color: "#f2f3f5", fontSize: 15, textAlign: "center", marginBottom: 16 },
-  permBtn: { backgroundColor: "#3b82f6", paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10 },
-  permBtnText: { color: "#fff", fontWeight: "700" },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  frame: {
-    width: 240,
-    height: 240,
-    borderRadius: 16,
-    borderWidth: 3,
-    borderColor: "#3b82f6",
-  },
-  hint: {
-    color: "#fff",
-    fontSize: 13,
-    marginTop: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  connectingBar: {
-    position: "absolute",
-    bottom: 40,
-    alignSelf: "center",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  connectingText: { color: "#fff", fontSize: 13 },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    center: { alignItems: "center", justifyContent: "center", padding: 32 },
+    permText: { color: colors.text, fontSize: 15, textAlign: "center", marginBottom: 16 },
+    permBtn: { backgroundColor: colors.primary, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10 },
+    permBtnText: { color: colors.onPrimary, fontWeight: "700" },
+    overlay: {
+      ...StyleSheet.absoluteFillObject,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    frame: {
+      width: 240,
+      height: 240,
+      borderRadius: 16,
+      borderWidth: 3,
+      borderColor: colors.primary,
+    },
+    hint: {
+      color: "#fff",
+      fontSize: 13,
+      marginTop: 20,
+      backgroundColor: "rgba(0,0,0,0.5)",
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 10,
+    },
+    connectingBar: {
+      position: "absolute",
+      bottom: 40,
+      alignSelf: "center",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      backgroundColor: "rgba(0,0,0,0.7)",
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 12,
+    },
+    connectingText: { color: "#fff", fontSize: 13 },
+  });
+}

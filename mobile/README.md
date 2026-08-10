@@ -111,6 +111,70 @@ npm install -g eas-cli
 eas build --platform android
 ```
 
+## Build your own APK from source (trust nothing prebuilt)
+
+Don't want to install an APK that someone else built? Build it yourself from
+this repo — the APK is compiled on your own machine from the exact source in
+`mobile/`, so you're trusting the code, not a binary.
+
+Two ways to build it: locally with Gradle (no Expo account needed), or via
+Expo's cloud build (EAS) if you'd rather not install Android Studio.
+
+**Option A — local Gradle build (no accounts, fully offline)**
+
+Prerequisites (one-time):
+
+- Node.js 18+ and npm
+- JDK 17 (`java -version`)
+- Android SDK — easiest via
+  [Android Studio](https://developer.android.com/studio) (SDK Platform +
+  command-line tools); make sure `ANDROID_HOME` is set.
+
+Build:
+
+```bash
+git clone <repo-url> minilab
+cd minilab/mobile
+npm install
+npx expo prebuild --platform android   # generates the android/ project locally
+cd android
+./gradlew assembleRelease             # first run downloads Gradle + SDK deps — be patient
+```
+
+**Option B — EAS cloud build (no Android SDK needed)**
+
+Everything runs on Expo's build servers; you only need Node.js and a free
+[Expo account](https://expo.dev/signup). Note this does send your source up to
+Expo's servers to be compiled there — use Option A if you don't want that.
+
+```bash
+cd mobile
+npm install
+npm install -g eas-cli
+eas login                                # your Expo account
+eas init                                 # links this repo to your own EAS project
+eas build --platform android --profile preview
+```
+
+The build prints a link to download the APK (or install it on a connected
+device). `--profile preview` is already configured in `eas.json` to produce an
+installable APK.
+
+The APK lands at `android/app/build/outputs/apk/release/app-release.apk`,
+signed with the debug keystore — fine for personal sideloading. (If you want a
+real release keystore, see the "Caution" comment in
+`android/app/build.gradle`.)
+
+Install it: copy the APK to your phone and open it (Android asks to allow
+installing from that source), or from a USB-connected device:
+
+```bash
+adb install android/app/build/outputs/apk/release/app-release.apk
+```
+
+Then pair as usual: **Add Device → Scan QR** (point at the backend's
+`install.sh` terminal output) or paste a pairing code.
+
 ## Next-feature roadmap (not implemented yet)
 
 Reboot/shutdown power control is done (dashboard buttons + type-to-confirm).

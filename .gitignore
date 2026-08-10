@@ -6,6 +6,9 @@ node_modules/
 
 mobile/.expo/
 mobile/dist/
+mobile/android/
+mobile/ios/
+mobile/*.apk
 
 agent/dist/
 agent/minilab-backend

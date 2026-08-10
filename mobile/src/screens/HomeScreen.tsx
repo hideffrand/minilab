@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -409,7 +409,10 @@ export default function HomeScreen({ navigation }: Props) {
   const { devices, activeDevice, setActiveDeviceId } = useDevices();
   const { colors } = useTheme();
   const styles = makeStyles(colors);
-  const client = activeDevice ? createClient(activeDevice) : null;
+  const client = useMemo(
+    () => (activeDevice ? createClient(activeDevice) : null),
+    [activeDevice?.baseUrl, activeDevice?.apiKey]
+  );
 
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(true);

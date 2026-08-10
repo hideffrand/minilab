@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -17,7 +18,7 @@ import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../context/ThemeContext";
-import { createClient } from "../api/client";
+import { createClient, fileUrl } from "../api/client";
 import {
   listFiles,
   mkdir,
@@ -32,6 +33,12 @@ import PromptModal from "./components/PromptModal";
 import ActionSheet from "./components/ActionSheet";
 
 type Props = NativeStackScreenProps<RootStackParamList, "FileBrowser">;
+
+type ViewMode = "list" | "grid";
+type SortField = "name" | "size" | "date";
+type SortDir = "asc" | "desc";
+
+const IMAGE_EXT = ["jpg", "jpeg", "png", "gif", "webp", "bmp"];
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -49,6 +56,20 @@ function joinPath(dir: string, name: string): string {
   return dir ? `${dir}/${name}` : name;
 }
 
+function extOf(name: string): string {
+  const parts = name.split(".");
+  return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : "";
+}
+
+const SORT_OPTIONS: { label: string; field: SortField; dir: SortDir }[] = [
+  { label: "Name (A → Z)", field: "name", dir: "asc" },
+  { label: "Name (Z → A)", field: "name", dir: "desc" },
+  { label: "Size (small → large)", field: "size", dir: "asc" },
+  { label: "Size (large → small)", field: "size", dir: "desc" },
+  { label: "Date (oldest first)", field: "date", dir: "asc" },
+  { label: "Date (newest first)", field: "date", dir: "desc" },
+];
+
 export default function FileBrowserScreen({ route, navigation }: Props) {
   const currentPath = route.params?.path ?? "";
   const { activeDevice } = useDevices();
@@ -61,6 +82,11 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [sortMenuVisible, setSortMenuVisible] = useState(false);
 
   const [mkdirVisible, setMkdirVisible] = useState(false);
   const [menuTarget, setMenuTarget] = useState<FileEntry | null>(null);
@@ -77,12 +103,7 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
     setError(null);
     try {
       const res = await listFiles(client, currentPath);
-      // Folders first, then alphabetical.
-      const sorted = [...res.entries].sort((a, b) => {
-        if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
-        return a.name.localeCompare(b.name);
-      });
-      setEntries(sorted);
+      setEntries(res.entries);
     } catch (e: any) {
       setError(e?.response?.data?.error ?? e.message ?? "Failed to load folder");
     } finally {
@@ -101,6 +122,24 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
     setRefreshing(true);
     load();
   };
+
+  // Folders always pinned above files; sort field/dir applies within each group.
+  const sortedEntries = useMemo(() => {
+    const cmp = (a: FileEntry, b: FileEntry) => {
+      let result = 0;
+      if (sortField === "name") {
+        result = a.name.localeCompare(b.name);
+      } else if (sortField === "size") {
+        result = a.size - b.size;
+      } else {
+        result = new Date(a.modTime).getTime() - new Date(b.modTime).getTime();
+      }
+      return sortDir === "asc" ? result : -result;
+    };
+    const dirs = entries.filter((e) => e.isDir).sort(cmp);
+    const files = entries.filter((e) => !e.isDir).sort(cmp);
+    return [...dirs, ...files];
+  }, [entries, sortField, sortDir]);
 
   const openEntry = (entry: FileEntry) => {
     if (entry.isDir) {
@@ -177,7 +216,7 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
     }
   };
 
-  const renderItem = ({ item }: { item: FileEntry }) => (
+  const renderListItem = ({ item }: { item: FileEntry }) => (
     <TouchableOpacity
       style={styles.row}
       onPress={() => openEntry(item)}
@@ -201,6 +240,43 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
     </TouchableOpacity>
   );
 
+  const renderGridItem = ({ item }: { item: FileEntry }) => {
+    const ext = extOf(item.name);
+    const isImage = !item.isDir && IMAGE_EXT.includes(ext);
+    const thumbUri =
+      isImage && activeDevice ? fileUrl(activeDevice, "preview", item.path) : null;
+
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => openEntry(item)}
+        onLongPress={() => onLongPress(item)}
+      >
+        <View style={styles.cardThumb}>
+          {thumbUri ? (
+            <Image
+              source={{ uri: thumbUri, headers: { "X-API-Key": activeDevice?.apiKey ?? "" } }}
+              style={styles.cardImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Ionicons
+              name={item.isDir ? "folder" : "document-outline"}
+              size={38}
+              color={colors.textSecondary}
+            />
+          )}
+        </View>
+        <Text style={styles.cardName} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={styles.cardMeta} numberOfLines={1}>
+          {item.isDir ? "Folder" : formatSize(item.size)}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
   if (!activeDevice || !client) {
     return (
       <View style={[styles.container, styles.center]}>
@@ -208,6 +284,9 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
       </View>
     );
   }
+
+  const currentSortLabel =
+    SORT_OPTIONS.find((o) => o.field === sortField && o.dir === sortDir)?.label ?? "Sort";
 
   return (
     <View style={styles.container}>
@@ -235,8 +314,25 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
         <TouchableOpacity style={styles.toolbarBtn} onPress={onRefresh}>
           <Text style={styles.toolbarBtnText}>⟳ Refresh</Text>
         </TouchableOpacity>
-      </ScrollView>
 
+        <TouchableOpacity style={styles.toolbarBtn} onPress={() => setSortMenuVisible(true)}>
+          <View style={styles.btnRow}>
+            <Ionicons name="swap-vertical-outline" size={14} color={colors.textLighter} />
+            <Text style={styles.toolbarBtnText}>{currentSortLabel}</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.iconToggleBtn}
+          onPress={() => setViewMode((m) => (m === "list" ? "grid" : "list"))}
+        >
+          <Ionicons
+            name={viewMode === "list" ? "grid-outline" : "list-outline"}
+            size={18}
+            color={colors.textLighter}
+          />
+        </TouchableOpacity>
+      </ScrollView>
 
       {busy && (
         <View style={styles.busyBar}>
@@ -254,15 +350,19 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
             <Text style={styles.toolbarBtnText}>Try again</Text>
           </TouchableOpacity>
         </View>
-      ) : entries.length === 0 ? (
+      ) : sortedEntries.length === 0 ? (
         <View style={styles.center}>
           <Text style={styles.emptyText}>This folder is empty</Text>
         </View>
       ) : (
         <FlatList
-          data={entries}
+          key={viewMode}
+          data={sortedEntries}
           keyExtractor={(item) => item.path || item.name}
-          renderItem={renderItem}
+          renderItem={viewMode === "list" ? renderListItem : renderGridItem}
+          numColumns={viewMode === "grid" ? 3 : 1}
+          columnWrapperStyle={viewMode === "grid" ? styles.gridRow : undefined}
+          contentContainerStyle={viewMode === "grid" ? styles.gridContent : undefined}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />
           }
@@ -355,6 +455,20 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
         ]}
         onCancel={() => setMenuTarget(null)}
       />
+
+      <ActionSheet
+        visible={sortMenuVisible}
+        title="Sort by"
+        actions={SORT_OPTIONS.map((opt) => ({
+          label: opt.field === sortField && opt.dir === sortDir ? `✓ ${opt.label}` : opt.label,
+          onPress: () => {
+            setSortField(opt.field);
+            setSortDir(opt.dir);
+            setSortMenuVisible(false);
+          },
+        }))}
+        onCancel={() => setSortMenuVisible(false)}
+      />
     </View>
   );
 }
@@ -368,6 +482,14 @@ function makeStyles(colors: ThemeColors) {
       paddingVertical: 8,
       paddingHorizontal: 14,
       borderRadius: 20,
+    },
+    iconToggleBtn: {
+      backgroundColor: colors.card,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      alignItems: "center",
+      justifyContent: "center",
     },
     btnRow: { flexDirection: "row", alignItems: "center", gap: 6 },
     toolbarBtnText: { color: colors.textLighter, fontSize: 13, fontWeight: "600" },
@@ -394,5 +516,27 @@ function makeStyles(colors: ThemeColors) {
     errorText: { color: colors.dangerText, textAlign: "center", marginBottom: 12 },
     emptyText: { color: colors.textMuted },
     retryBtn: { backgroundColor: colors.card, padding: 10, borderRadius: 8 },
+
+    gridContent: { paddingHorizontal: 8, paddingTop: 8, paddingBottom: 24 },
+    gridRow: { gap: 8, marginBottom: 8 },
+    card: {
+      flex: 1 / 3,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 8,
+      marginHorizontal: 4,
+    },
+    cardThumb: {
+      aspectRatio: 1,
+      borderRadius: 8,
+      backgroundColor: colors.background,
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+      marginBottom: 6,
+    },
+    cardImage: { width: "100%", height: "100%" },
+    cardName: { color: colors.text, fontSize: 12, fontWeight: "500" },
+    cardMeta: { color: colors.textSecondary, fontSize: 10, marginTop: 2 },
   });
 }

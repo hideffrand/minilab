@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Minilab Control",
-    "slug": "minilab-control",
+    "slug": "minilab",
     "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -54,8 +54,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "ab2d36e5-e74b-4533-971c-50eeafaf06c9"
+        "projectId": "3f6cf936-9e96-4fc0-a089-5eb72c3d3f01"
       }
-    }
+    },
+    "owner": "dfarera12s-team"
   }
 }

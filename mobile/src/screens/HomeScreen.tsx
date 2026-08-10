@@ -156,6 +156,7 @@ export default function HomeScreen({ navigation }: Props) {
   const [powerAction_, setPowerAction_] = useState<PowerAction | null>(null);
   const [powerToken, setPowerToken] = useState("");
   const [powerBusy, setPowerBusy] = useState(false);
+  const [powerExpanded, setPowerExpanded] = useState(false);
 
   const load = useCallback(async () => {
     if (!client) return;
@@ -306,22 +307,34 @@ export default function HomeScreen({ navigation }: Props) {
       </TouchableOpacity>
 
       <View style={styles.powerSection}>
-        <Text style={styles.sectionTitle}>Power</Text>
-        <View style={styles.card}>
-          <Text style={styles.menuSub}>
-            These commands will affect the whole machine, not just this app.
-          </Text>
-          <View style={styles.powerRow}>
-            <TouchableOpacity style={[styles.powerBtn, styles.powerBtnReboot]} onPress={() => openPower("reboot")}>
-              <Ionicons name="refresh" size={18} color={colors.onPrimary} />
-              <Text style={styles.powerBtnText}>Reboot</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.powerBtn, styles.powerBtnShutdown]} onPress={() => openPower("shutdown")}>
-              <Ionicons name="power" size={18} color={colors.onPrimary} />
-              <Text style={styles.powerBtnText}>Shutdown</Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.powerHeader}
+          onPress={() => setPowerExpanded((v) => !v)}
+        >
+          <Text style={styles.sectionTitle}>Power</Text>
+          <Ionicons
+            name={powerExpanded ? "chevron-up" : "chevron-down"}
+            size={16}
+            color={colors.textSecondary}
+          />
+        </TouchableOpacity>
+        {powerExpanded && (
+          <View style={styles.card}>
+            <Text style={styles.menuSub}>
+              These commands will affect the whole machine, not just this app.
+            </Text>
+            <View style={styles.powerRow}>
+              <TouchableOpacity style={[styles.powerBtn, styles.powerBtnReboot]} onPress={() => openPower("reboot")}>
+                <Ionicons name="refresh" size={18} color={colors.onPrimary} />
+                <Text style={styles.powerBtnText}>Reboot</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.powerBtn, styles.powerBtnShutdown]} onPress={() => openPower("shutdown")}>
+                <Ionicons name="power" size={18} color={colors.onPrimary} />
+                <Text style={styles.powerBtnText}>Shutdown</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
       </View>
 
       <TypeToConfirmModal
@@ -428,6 +441,11 @@ function makeStyles(colors: ThemeColors) {
     menuSub: { color: colors.textSecondary, fontSize: 13, marginTop: 2, lineHeight: 18 },
 
     powerSection: { padding: 16, paddingTop: 4 },
+    powerHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
     powerRow: { flexDirection: "row", gap: 12, marginTop: 14 },
     powerBtn: {
       flex: 1,

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -12,15 +12,13 @@ import {
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useDevices } from "../context/DevicesContext";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../context/ThemeContext";
 import { createClient } from "../api/client";
-import { getConfirmToken, getSystemStats, powerAction, PowerAction } from "../api/system";
+import { getSystemStats, powerAction, PowerAction } from "../api/system";
 import { SystemStats } from "../types";
-import { biometricAuthAvailable, authenticateWithDeviceLock } from "../utils/biometricAuth";
 import TypeToConfirmModal from "./components/TypeToConfirmModal";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
@@ -143,9 +141,25 @@ function usePulse(active: boolean) {
 }
 
 // ---------------------------------------------------------------------------
-// Gradient meter — always shows the full green→red ramp; a mask reveals only
-// the used portion, so the exposed color at the edge *is* the health signal.
+// Meter — a plain fill bar, colored as a solid from a 5-band range (0–20,
+// 20–40, 40–60, 60–80, 80–100), rather than a continuous gradient.
 // ---------------------------------------------------------------------------
+
+const METER_RANGES: { max: number; color: string }[] = [
+  { max: 20, color: "#22C55E" }, // green
+  { max: 40, color: "#84CC16" }, // lime
+  { max: 60, color: "#EAB308" }, // yellow
+  { max: 80, color: "#F97316" }, // orange
+  { max: 100, color: "#EF4444" }, // red
+];
+
+function getRangeColor(percent: number): string {
+  const p = Math.max(0, Math.min(100, percent));
+  for (const band of METER_RANGES) {
+    if (p <= band.max) return band.color;
+  }
+  return METER_RANGES[METER_RANGES.length - 1].color;
+}
 
 function GradientMeter({
   percent,
@@ -157,18 +171,13 @@ function GradientMeter({
   height?: number;
 }) {
   const clamped = Math.max(0, Math.min(100, percent));
+  const color = getRangeColor(clamped);
   return (
     <View style={[meterStyles.track, { height, borderRadius: height / 2, backgroundColor: colors.surface }]}>
-      <LinearGradient
-        colors={["#22C55E", "#EAB308", "#F97316", "#EF4444"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
       <View
         style={[
-          meterStyles.mask,
-          { width: `${100 - clamped}%`, backgroundColor: colors.surface },
+          meterStyles.fill,
+          { width: `${clamped}%`, height: "100%", borderRadius: height / 2, backgroundColor: color },
         ]}
       />
     </View>
@@ -177,7 +186,7 @@ function GradientMeter({
 
 const meterStyles = StyleSheet.create({
   track: { overflow: "hidden", width: "100%" },
-  mask: { position: "absolute", top: 0, right: 0, bottom: 0 },
+  fill: {},
 });
 
 // ---------------------------------------------------------------------------
@@ -409,10 +418,7 @@ export default function HomeScreen({ navigation }: Props) {
   const { devices, activeDevice, setActiveDeviceId } = useDevices();
   const { colors } = useTheme();
   const styles = makeStyles(colors);
-  const client = useMemo(
-    () => (activeDevice ? createClient(activeDevice) : null),
-    [activeDevice?.baseUrl, activeDevice?.apiKey]
-  );
+  const client = activeDevice ? createClient(activeDevice) : null;
 
   const [stats, setStats] = useState<SystemStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -421,7 +427,6 @@ export default function HomeScreen({ navigation }: Props) {
 
   const [powerAction_, setPowerAction_] = useState<PowerAction | null>(null);
   const [powerToken, setPowerToken] = useState("");
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [powerBusy, setPowerBusy] = useState(false);
   const [powerExpanded, setPowerExpanded] = useState(false);
 
@@ -450,9 +455,8 @@ export default function HomeScreen({ navigation }: Props) {
     load();
   };
 
-  const openPower = async (action: PowerAction) => {
+  const openPower = (action: PowerAction) => {
     setPowerToken(makeConfirmToken());
-    setBiometricAvailable(await biometricAuthAvailable());
     setPowerAction_(action);
   };
 
@@ -461,16 +465,7 @@ export default function HomeScreen({ navigation }: Props) {
     setPowerBusy(true);
     const action = powerAction_;
     try {
-      if (
-        biometricAvailable &&
-        !(await authenticateWithDeviceLock(
-          action === "reboot" ? "Confirm reboot" : "Confirm shutdown"
-        ))
-      ) {
-        return;
-      }
-      const confirmToken = await getConfirmToken(client);
-      await powerAction(client, action, confirmToken);
+      await powerAction(client, action);
       setPowerAction_(null);
       Alert.alert(
         action === "reboot" ? "Rebooting" : "Shutting down",
@@ -614,12 +609,11 @@ export default function HomeScreen({ navigation }: Props) {
         visible={!!powerAction_}
         title={powerAction_ === "reboot" ? "Reboot device?" : "Shut down device?"}
         message={
-          (powerAction_ === "reboot"
+          powerAction_ === "reboot"
             ? "This will restart the machine. Any unsaved work on it will be lost."
-            : "This will power the machine off. It stays off until someone starts it again.") +
-          (biometricAvailable ? " Confirm with your device lock to proceed." : "")
+            : "This will power the machine off. It stays off until someone starts it again."
         }
-        token={biometricAvailable ? undefined : powerToken}
+        token={powerToken}
         busy={powerBusy}
         confirmLabel={powerAction_ === "reboot" ? "Reboot" : "Shutdown"}
         onCancel={() => setPowerAction_(null)}

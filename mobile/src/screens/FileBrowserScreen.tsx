@@ -87,6 +87,7 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [sortMenuVisible, setSortMenuVisible] = useState(false);
+  const [fabMenuVisible, setFabMenuVisible] = useState(false);
 
   const [mkdirVisible, setMkdirVisible] = useState(false);
   const [menuTarget, setMenuTarget] = useState<FileEntry | null>(null);
@@ -290,49 +291,32 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.toolbar}
-        contentContainerStyle={{ gap: 8, paddingHorizontal: 12 }}
-      >
-        <TouchableOpacity style={styles.toolbarBtn} onPress={() => setMkdirVisible(true)}>
-          <Text style={styles.toolbarBtnText}>+ Folder</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.toolbarBtn} onPress={handleUpload}>
-          <View style={styles.btnRow}>
-            <Ionicons name="arrow-up-outline" size={14} color={colors.textLighter} />
-            <Text style={styles.toolbarBtnText}>Upload</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.toolbarBtn} onPress={() => navigation.navigate("Home")}>
-          <View style={styles.btnRow}>
-            <Ionicons name="stats-chart-outline" size={14} color={colors.textLighter} />
-            <Text style={styles.toolbarBtnText}>Home</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.toolbarBtn} onPress={onRefresh}>
-          <Text style={styles.toolbarBtnText}>⟳ Refresh</Text>
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate("Home")}>
+          <Ionicons name="home-outline" size={18} color={colors.textLighter} />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.toolbarBtn} onPress={() => setSortMenuVisible(true)}>
-          <View style={styles.btnRow}>
-            <Ionicons name="swap-vertical-outline" size={14} color={colors.textLighter} />
-            <Text style={styles.toolbarBtnText}>{currentSortLabel}</Text>
-          </View>
-        </TouchableOpacity>
+        <Text style={styles.pathText} numberOfLines={1}>
+          {currentPath || "/"}
+        </Text>
 
-        <TouchableOpacity
-          style={styles.iconToggleBtn}
-          onPress={() => setViewMode((m) => (m === "list" ? "grid" : "list"))}
-        >
-          <Ionicons
-            name={viewMode === "list" ? "grid-outline" : "list-outline"}
-            size={18}
-            color={colors.textLighter}
-          />
-        </TouchableOpacity>
-      </ScrollView>
+        <View style={styles.topBarActions}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => setSortMenuVisible(true)}>
+            <Ionicons name="filter-outline" size={18} color={colors.textLighter} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => setViewMode((m) => (m === "list" ? "grid" : "list"))}
+          >
+            <Ionicons
+              name={viewMode === "list" ? "grid-outline" : "list-outline"}
+              size={18}
+              color={colors.textLighter}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Text style={styles.sortCaption}>Sorted by {currentSortLabel}</Text>
 
       {busy && (
         <View style={styles.busyBar}>
@@ -351,9 +335,14 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
           </TouchableOpacity>
         </View>
       ) : sortedEntries.length === 0 ? (
-        <View style={styles.center}>
+        <ScrollView
+          contentContainerStyle={styles.emptyScrollContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />
+          }
+        >
           <Text style={styles.emptyText}>This folder is empty</Text>
-        </View>
+        </ScrollView>
       ) : (
         <FlatList
           key={viewMode}
@@ -362,7 +351,7 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
           renderItem={viewMode === "list" ? renderListItem : renderGridItem}
           numColumns={viewMode === "grid" ? 3 : 1}
           columnWrapperStyle={viewMode === "grid" ? styles.gridRow : undefined}
-          contentContainerStyle={viewMode === "grid" ? styles.gridContent : undefined}
+          contentContainerStyle={viewMode === "grid" ? styles.gridContent : styles.listContent}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />
           }
@@ -469,6 +458,36 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
         }))}
         onCancel={() => setSortMenuVisible(false)}
       />
+
+      <ActionSheet
+        visible={fabMenuVisible}
+        title="Add"
+        actions={[
+          {
+            label: "New Folder",
+            onPress: () => {
+              setFabMenuVisible(false);
+              setMkdirVisible(true);
+            },
+          },
+          {
+            label: "Upload File",
+            onPress: () => {
+              setFabMenuVisible(false);
+              handleUpload();
+            },
+          },
+        ]}
+        onCancel={() => setFabMenuVisible(false)}
+      />
+
+      <TouchableOpacity
+        style={styles.fab}
+        activeOpacity={0.85}
+        onPress={() => setFabMenuVisible(true)}
+      >
+        <Ionicons name="add" size={28} color={colors.onPrimary} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -476,14 +495,19 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
 function makeStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    toolbar: { flexGrow: 0, paddingVertical: 10 },
-    toolbarBtn: {
-      backgroundColor: colors.card,
-      paddingVertical: 8,
-      paddingHorizontal: 14,
-      borderRadius: 20,
+
+    // -- top bar (home / current path / filter / view toggle) --
+    topBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 6,
     },
-    iconToggleBtn: {
+    pathText: { flex: 1, color: colors.textSecondary, fontSize: 13, fontWeight: "500" },
+    topBarActions: { flexDirection: "row", gap: 8 },
+    iconBtn: {
       backgroundColor: colors.card,
       width: 34,
       height: 34,
@@ -491,7 +515,38 @@ function makeStyles(colors: ThemeColors) {
       alignItems: "center",
       justifyContent: "center",
     },
-    btnRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+    sortCaption: {
+      color: colors.textMuted,
+      fontSize: 11,
+      paddingHorizontal: 16,
+      paddingBottom: 8,
+    },
+
+    // -- floating add button --
+    fab: {
+      position: "absolute",
+      right: 20,
+      bottom: 24,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+      elevation: 5,
+    },
+
+    emptyScrollContent: {
+      flexGrow: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+    },
+
     toolbarBtnText: { color: colors.textLighter, fontSize: 13, fontWeight: "600" },
     busyBar: {
       flexDirection: "row",
@@ -517,7 +572,8 @@ function makeStyles(colors: ThemeColors) {
     emptyText: { color: colors.textMuted },
     retryBtn: { backgroundColor: colors.card, padding: 10, borderRadius: 8 },
 
-    gridContent: { paddingHorizontal: 8, paddingTop: 8, paddingBottom: 24 },
+    listContent: { paddingBottom: 90 },
+    gridContent: { paddingHorizontal: 8, paddingTop: 8, paddingBottom: 90 },
     gridRow: { gap: 8, marginBottom: 8 },
     card: {
       flex: 1 / 3,

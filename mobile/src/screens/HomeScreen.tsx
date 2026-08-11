@@ -17,8 +17,9 @@ import { useDevices } from "../context/DevicesContext";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeColors } from "../context/ThemeContext";
 import { createClient } from "../api/client";
-import { getSystemStats, powerAction, PowerAction } from "../api/system";
+import { getConfirmToken, getSystemStats, powerAction, PowerAction } from "../api/system";
 import { SystemStats } from "../types";
+import { authenticateWithDeviceLock, biometricAuthAvailable } from "../utils/biometricAuth";
 import TypeToConfirmModal from "./components/TypeToConfirmModal";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Home">;
@@ -455,17 +456,12 @@ export default function HomeScreen({ navigation }: Props) {
     load();
   };
 
-  const openPower = (action: PowerAction) => {
-    setPowerToken(makeConfirmToken());
-    setPowerAction_(action);
-  };
-
-  const confirmPower = async () => {
-    if (!client || !powerAction_) return;
+  const executePower = async (action: PowerAction) => {
+    if (!client) return;
     setPowerBusy(true);
-    const action = powerAction_;
     try {
-      await powerAction(client, action);
+      const token = await getConfirmToken(client);
+      await powerAction(client, action, token);
       setPowerAction_(null);
       Alert.alert(
         action === "reboot" ? "Rebooting" : "Shutting down",
@@ -481,6 +477,24 @@ export default function HomeScreen({ navigation }: Props) {
     } finally {
       setPowerBusy(false);
     }
+  };
+
+  const openPower = async (action: PowerAction) => {
+    if (!client) return;
+    if (await biometricAuthAvailable()) {
+      const ok = await authenticateWithDeviceLock(
+        action === "reboot" ? "Reboot the device?" : "Shut down the device?"
+      );
+      if (ok) await executePower(action);
+    } else {
+      setPowerToken(makeConfirmToken());
+      setPowerAction_(action);
+    }
+  };
+
+  const confirmPower = async () => {
+    if (!powerAction_) return;
+    await executePower(powerAction_);
   };
 
   if (!activeDevice || !client) {

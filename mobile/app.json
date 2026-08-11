@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Minilab",
-    "slug": "minilab",
-    "scheme": "minilab",
+    "name": "mooni",
+    "slug": "mooni",
+    "scheme": "mooni",
     "version": "1.0.1",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -17,11 +17,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.minilab.control",
+      "bundleIdentifier": "com.mooni.app",
       "buildNumber": "1"
     },
     "android": {
-      "package": "com.minilab.control",
+      "package": "com.mooni.app",
       "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -56,16 +56,22 @@
         "expo-share-intent",
         {
           "disableIOS": true,
-          "androidIntentFilters": ["image/*", "video/*"],
-          "androidMultiIntentFilters": ["image/*", "video/*"]
+          "androidIntentFilters": [
+            "image/*",
+            "video/*"
+          ],
+          "androidMultiIntentFilters": [
+            "image/*",
+            "video/*"
+          ]
         }
       ]
     ],
     "extra": {
       "eas": {
-        "projectId": "3f6cf936-9e96-4fc0-a089-5eb72c3d3f01"
+        "projectId": "dc4c86de-3bf4-4b13-9263-654991d4460b"
       }
     },
-    "owner": "dfarera12s-team"
+    "owner": "hideffrand"
   }
 }

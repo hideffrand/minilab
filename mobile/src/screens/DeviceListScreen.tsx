@@ -52,7 +52,7 @@ export default function DeviceListScreen({ navigation }: Props) {
         <View style={styles.center}>
           <Text style={styles.emptyTitle}>No devices yet</Text>
           <Text style={styles.emptyHint}>
-            Ask the person managing your minilab for a "pairing code", then
+            Ask the person managing your mooni for a "pairing code", then
             paste it here to get started.
           </Text>
         </View>

@@ -11,7 +11,7 @@ import (
 	qrcode "github.com/skip2/go-qrcode"
 )
 
-const prefix = "MINILAB1:"
+const prefix = "MOONI1:"
 
 type Payload struct {
 	Name    string `json:"name"`

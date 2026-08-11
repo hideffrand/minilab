@@ -11,4 +11,4 @@ mobile/ios/
 mobile/*.apk
 
 agent/dist/
-agent/minilab-backend
+agent/mooni-backend

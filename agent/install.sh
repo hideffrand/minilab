@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Minilab backend — one-command setup.
+# Mooni backend — one-command setup.
 # Builds the server, generates a random API key, detects a reachable IP
 # (Tailscale first, then the LAN IP), and prints a QR + pairing code the
 # mobile app can scan to connect.
 set -euo pipefail
 
-CONFIG_DIR="$HOME/.minilab"
+CONFIG_DIR="$HOME/.mooni"
 CONFIG_FILE="$CONFIG_DIR/config.env"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BIN_PATH="$SCRIPT_DIR/minilab-backend"
+BIN_PATH="$SCRIPT_DIR/mooni-backend"
 
 say() { printf '\n=== %s ===\n' "$1"; }
 
@@ -25,7 +25,7 @@ confirm() {
   [[ "$ans" =~ ^[Yy]$ ]]
 }
 
-echo "Minilab Backend — Setup"
+echo "Mooni Backend — Setup"
 echo "======================="
 
 # 1. Make sure Go is available
@@ -56,14 +56,14 @@ fi
 say "3/8 Allowed folder"
 echo "Note: the app gets full read/write/delete access to whatever folder you pick."
 
-if [[ -n "${MINILAB_ROOT_DIR:-}" && -d "${MINILAB_ROOT_DIR:-}" ]]; then
-  echo "Current root dir (from previous config): $MINILAB_ROOT_DIR"
+if [[ -n "${MOONI_ROOT_DIR:-}" && -d "${MOONI_ROOT_DIR:-}" ]]; then
+  echo "Current root dir (from previous config): $MOONI_ROOT_DIR"
   if ! confirm "Use this folder again?" "Y/n"; then
-    MINILAB_ROOT_DIR=""
+    MOONI_ROOT_DIR=""
   fi
 fi
 
-if [[ -z "${MINILAB_ROOT_DIR:-}" ]]; then
+if [[ -z "${MOONI_ROOT_DIR:-}" ]]; then
   SUGGESTIONS=()
   for d in Documents Downloads Pictures Music Videos Desktop; do
     if [[ -d "$HOME/$d" ]]; then
@@ -80,23 +80,23 @@ if [[ -z "${MINILAB_ROOT_DIR:-}" ]]; then
   echo "  $CUSTOM_OPTION) Type a custom path"
   read -rp "Choice [$CUSTOM_OPTION]: " CHOICE
   if [[ "$CHOICE" =~ ^[0-9]+$ ]] && (( CHOICE >= 1 && CHOICE <= ${#SUGGESTIONS[@]} )); then
-    MINILAB_ROOT_DIR="${SUGGESTIONS[$((CHOICE-1))]}"
-    echo "Using: $MINILAB_ROOT_DIR"
+    MOONI_ROOT_DIR="${SUGGESTIONS[$((CHOICE-1))]}"
+    echo "Using: $MOONI_ROOT_DIR"
   else
     read -rp "Custom path (the app may access this folder): " ROOT_INPUT
-    MINILAB_ROOT_DIR="${ROOT_INPUT:-$HOME/minilab-storage}"
+    MOONI_ROOT_DIR="${ROOT_INPUT:-$HOME/mooni-storage}"
   fi
 fi
-mkdir -p "$MINILAB_ROOT_DIR"
-echo "Root dir: $MINILAB_ROOT_DIR"
+mkdir -p "$MOONI_ROOT_DIR"
+echo "Root dir: $MOONI_ROOT_DIR"
 
 # 4. API key (reuse the previous one if it exists)
 say "4/8 API key"
-if [[ -z "${MINILAB_API_KEY:-}" ]]; then
+if [[ -z "${MOONI_API_KEY:-}" ]]; then
   if command -v openssl >/dev/null 2>&1; then
-    MINILAB_API_KEY="$(openssl rand -hex 24)"
+    MOONI_API_KEY="$(openssl rand -hex 24)"
   else
-    MINILAB_API_KEY="$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+    MOONI_API_KEY="$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
   fi
   echo "Generated a new API key."
 else
@@ -105,9 +105,9 @@ fi
 
 # 5. Port
 say "5/8 Port"
-DEFAULT_PORT="${MINILAB_PORT:-8080}"
+DEFAULT_PORT="${MOONI_PORT:-8080}"
 read -rp "Backend port [$DEFAULT_PORT]: " PORT_INPUT
-MINILAB_PORT="${PORT_INPUT:-$DEFAULT_PORT}"
+MOONI_PORT="${PORT_INPUT:-$DEFAULT_PORT}"
 
 # 6. Device name (shown in the app)
 say "6/8 Device name"
@@ -118,9 +118,9 @@ DEVICE_NAME="${NAME_INPUT:-$DEFAULT_NAME}"
 # 7. Save the config (for reuse + the systemd service) and build
 say "7/8 Save config & build"
 cat > "$CONFIG_FILE" <<EOF
-MINILAB_ROOT_DIR=$MINILAB_ROOT_DIR
-MINILAB_API_KEY=$MINILAB_API_KEY
-MINILAB_PORT=$MINILAB_PORT
+MOONI_ROOT_DIR=$MOONI_ROOT_DIR
+MOONI_API_KEY=$MOONI_API_KEY
+MOONI_PORT=$MOONI_PORT
 EOF
 chmod 600 "$CONFIG_FILE"
 echo "Config saved to $CONFIG_FILE (mode 600)"
@@ -141,10 +141,10 @@ fi
 
 # Optional: install as a systemd service (auto-start on boot)
 if confirm "Run automatically at boot via systemd?" "y/N"; then
-  SERVICE_FILE="/etc/systemd/system/minilab-backend.service"
+  SERVICE_FILE="/etc/systemd/system/mooni-backend.service"
   sudo bash -c "cat > $SERVICE_FILE" <<EOF
 [Unit]
-Description=Minilab Backend
+Description=Mooni Backend
 After=network-online.target tailscaled.service
 Wants=network-online.target
 
@@ -159,8 +159,8 @@ Restart=on-failure
 WantedBy=multi-user.target
 EOF
   sudo systemctl daemon-reload
-  sudo systemctl enable --now minilab-backend
-  echo "systemd service active. Check status: sudo systemctl status minilab-backend"
+  sudo systemctl enable --now mooni-backend
+  echo "systemd service active. Check status: sudo systemctl status mooni-backend"
 else
   echo "Skipping systemd. Run manually with:"
   echo "  source $CONFIG_FILE && $BIN_PATH"
@@ -174,7 +174,7 @@ if confirm "Allow the app to reboot/shutdown this machine (needs sudo)?" "y/N"; 
   if [[ -z "$SYSTEMCTL" ]]; then
     echo "systemctl not found — power control not configured."
   else
-    SUDOERS_FILE="/etc/sudoers.d/minilab-power"
+    SUDOERS_FILE="/etc/sudoers.d/mooni-power"
     sudo bash -c "printf '%s ALL=(ALL) NOPASSWD: %s reboot, %s poweroff\\n' \"$USER\" \"$SYSTEMCTL\" \"$SYSTEMCTL\" > $SUDOERS_FILE"
     sudo chmod 440 "$SUDOERS_FILE"
     if ! sudo visudo -cf "$SUDOERS_FILE"; then
@@ -188,7 +188,7 @@ fi
 
 # Print the pairing code (QR + text) to scan or paste from the app
 say "Pairing Code"
-export MINILAB_ROOT_DIR MINILAB_API_KEY MINILAB_PORT
+export MOONI_ROOT_DIR MOONI_API_KEY MOONI_PORT
 PAIR_ARGS=(-pair -name "$DEVICE_NAME")
 if [[ -n "$TS_IP" ]]; then
   PAIR_ARGS+=(-host "$TS_IP")
@@ -202,5 +202,5 @@ The code above is also saved to: $CONFIG_DIR/last-pairing-code.txt
 Open the app on your phone -> 'Add Device' -> 'Paste Code' -> paste that code.
 
 To generate a pairing code again anytime (e.g. for someone else's phone):
-  source $CONFIG_FILE && ./minilab-backend -pair -name "Name of Phone"
+  source $CONFIG_FILE && ./mooni-backend -pair -name "Name of Phone"
 EOF

@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Minilab agent — one-command uninstall.
+# Mooni agent — one-command uninstall.
 # Removes the systemd service (if installed), the built binary, and the
-# config folder (~/.minilab). The storage folder is only deleted if the user
+# config folder (~/.mooni). The storage folder is only deleted if the user
 # explicitly picks that option AND types DELETE — never automatically.
 set -euo pipefail
 
-CONFIG_DIR="$HOME/.minilab"
+CONFIG_DIR="$HOME/.mooni"
 CONFIG_FILE="$CONFIG_DIR/config.env"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BIN_PATH="$SCRIPT_DIR/minilab-backend"
-SERVICE_NAME="minilab-backend"
+BIN_PATH="$SCRIPT_DIR/mooni-backend"
+SERVICE_NAME="mooni-backend"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 
 say() { printf '\n=== %s ===\n' "$1"; }
@@ -33,10 +33,10 @@ STORAGE_DIR=""
 if [[ -f "$CONFIG_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$CONFIG_FILE"
-  STORAGE_DIR="${MINILAB_ROOT_DIR:-}"
+  STORAGE_DIR="${MOONI_ROOT_DIR:-}"
 fi
 
-echo "Minilab Agent — Uninstall"
+echo "Mooni Agent — Uninstall"
 echo "========================="
 
 # 1. Stop & remove the systemd service
@@ -52,8 +52,8 @@ else
 fi
 
 # Remove the passwordless-sudo rule that powered the app's Reboot/Shutdown.
-if [[ -f /etc/sudoers.d/minilab-power ]]; then
-  sudo rm -f /etc/sudoers.d/minilab-power
+if [[ -f /etc/sudoers.d/mooni-power ]]; then
+  sudo rm -f /etc/sudoers.d/mooni-power
   echo "Removed the power-control sudoers rule."
 fi
 

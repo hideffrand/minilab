@@ -25,7 +25,7 @@ Status: **audited Aug 2026** (see audit notes in conversation). Target: pass Pla
 
 ## Review-process risk
 
-- [ ] **Listing must explain it's a companion app** — reviewer sees an empty device list without an agent server. Add short + full description: "companion app for your own Minilab server; requires the agent + Tailscale." Add test instructions.
+- [ ] **Listing must explain it's a companion app** — reviewer sees an empty device list without an agent server. Add short + full description: "companion app for your own Mooni server; requires the agent + Tailscale." Add test instructions.
 - [ ] **Content rating + target-audience questionnaire** (Play Console).
 - [ ] **Screenshots** — ≥2 phone (incl. one 6.5"+); tablet screenshots recommended.
 
@@ -35,7 +35,7 @@ Status: **audited Aug 2026** (see audit notes in conversation). Target: pass Pla
 - [ ] Support email + support URL
 - [ ] Feature graphic 1024×500
 - [ ] Upload key / Play App Signing (EAS signing)
-- [ ] Verify `com.minilab.control` is reserved/owned
+- [ ] Verify `com.mooni.control` is reserved/owned
 
 ## Already compliant (verified)
 

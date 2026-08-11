@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"minilab-backend/internal/fsutil"
+	"mooni-backend/internal/fsutil"
 )
 
 type Handler struct {

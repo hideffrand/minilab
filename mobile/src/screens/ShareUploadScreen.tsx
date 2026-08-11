@@ -101,7 +101,7 @@ export default function ShareUploadScreen({ navigation }: Props) {
   if (rows.length === 0) {
     return (
       <View style={[styles.container, styles.center]}>
-        <Text style={styles.emptyText}>Nothing was shared to Minilab.</Text>
+        <Text style={styles.emptyText}>Nothing was shared to Mooni.</Text>
         <TouchableOpacity style={styles.btnPrimary} onPress={leave}>
           <Text style={styles.btnPrimaryText}>Back</Text>
         </TouchableOpacity>

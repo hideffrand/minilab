@@ -3,10 +3,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { DeviceProfile } from "../types";
 
-const STORAGE_KEY = "minilab.devices.v1";
+const STORAGE_KEY = "mooni.devices.v1";
 
 // API keys live in SecureStore (encrypted on Android), never in AsyncStorage.
-const keyFor = (id: string) => `minilab.apikey.${id}`;
+const keyFor = (id: string) => `mooni.apikey.${id}`;
 
 interface StoredDevice {
   id: string;

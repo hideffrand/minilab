@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"minilab-backend/internal/fsutil"
+	"mooni-backend/internal/fsutil"
 )
 
 type Entry struct {

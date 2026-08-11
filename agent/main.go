@@ -8,11 +8,11 @@ import (
 	"os"
 	"time"
 
-	"minilab-backend/internal/auth"
-	"minilab-backend/internal/config"
-	"minilab-backend/internal/files"
-	"minilab-backend/internal/pairing"
-	"minilab-backend/internal/system"
+	"mooni-backend/internal/auth"
+	"mooni-backend/internal/config"
+	"mooni-backend/internal/files"
+	"mooni-backend/internal/pairing"
+	"mooni-backend/internal/system"
 )
 
 func main() {
@@ -65,7 +65,7 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	log.Printf("minilab backend")
+	log.Printf("mooni backend")
 	log.Printf("  root dir : %s", cfg.RootDir)
 	log.Printf("  listening: :%s", cfg.Port)
 	log.Fatal(srv.ListenAndServe())
@@ -79,7 +79,7 @@ func runPair(cfg *config.Config, name, hostOverride string) {
 		if h, err := os.Hostname(); err == nil {
 			name = h
 		} else {
-			name = "Minilab"
+			name = "Mooni"
 		}
 	}
 
@@ -92,7 +92,7 @@ func runPair(cfg *config.Config, name, hostOverride string) {
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not detect a reachable IP (%v).\n", err)
 			fmt.Fprintf(os.Stderr, "Printing a code for 127.0.0.1 (won't work from a phone) — re-run with -host <ip-or-hostname>, e.g.:\n")
-			fmt.Fprintf(os.Stderr, "  ./minilab-backend -pair -host 100.x.x.x\n")
+			fmt.Fprintf(os.Stderr, "  ./mooni-backend -pair -host 100.x.x.x\n")
 			host = "127.0.0.1"
 		} else {
 			host = ip

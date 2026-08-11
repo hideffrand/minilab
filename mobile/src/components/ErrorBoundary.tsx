@@ -21,7 +21,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error("Minilab error boundary:", error, info.componentStack);
+    console.error("Mooni error boundary:", error, info.componentStack);
   }
 
   render() {

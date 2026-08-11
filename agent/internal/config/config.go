@@ -20,34 +20,34 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	root := os.Getenv("MINILAB_ROOT_DIR")
+	root := os.Getenv("MOONI_ROOT_DIR")
 	if root == "" {
-		return nil, fmt.Errorf("MINILAB_ROOT_DIR is required (the folder this API is allowed to manage)")
+		return nil, fmt.Errorf("MOONI_ROOT_DIR is required (the folder this API is allowed to manage)")
 	}
 	absRoot, err := filepath.Abs(root)
 	if err != nil {
-		return nil, fmt.Errorf("invalid MINILAB_ROOT_DIR: %w", err)
+		return nil, fmt.Errorf("invalid MOONI_ROOT_DIR: %w", err)
 	}
 	info, err := os.Stat(absRoot)
 	if err != nil {
-		return nil, fmt.Errorf("MINILAB_ROOT_DIR does not exist: %w", err)
+		return nil, fmt.Errorf("MOONI_ROOT_DIR does not exist: %w", err)
 	}
 	if !info.IsDir() {
-		return nil, fmt.Errorf("MINILAB_ROOT_DIR is not a directory: %s", absRoot)
+		return nil, fmt.Errorf("MOONI_ROOT_DIR is not a directory: %s", absRoot)
 	}
 	// Resolve symlinks on the root itself so all sandbox comparisons inside
 	// fsutil operate on the same canonical path.
 	resolvedRoot, err := filepath.EvalSymlinks(absRoot)
 	if err != nil {
-		return nil, fmt.Errorf("resolving MINILAB_ROOT_DIR: %w", err)
+		return nil, fmt.Errorf("resolving MOONI_ROOT_DIR: %w", err)
 	}
 
-	apiKey := os.Getenv("MINILAB_API_KEY")
+	apiKey := os.Getenv("MOONI_API_KEY")
 	if apiKey == "" {
-		return nil, fmt.Errorf("MINILAB_API_KEY is required (used to authenticate the mobile app)")
+		return nil, fmt.Errorf("MOONI_API_KEY is required (used to authenticate the mobile app)")
 	}
 
-	port := os.Getenv("MINILAB_PORT")
+	port := os.Getenv("MOONI_PORT")
 	if port == "" {
 		port = "8080"
 	}

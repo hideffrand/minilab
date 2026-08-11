@@ -17,7 +17,7 @@ export interface ServerSettings {
   apiKey: string;
 }
 
-/** A saved connection to one Linux backend ("minilab"). */
+/** A saved connection to one Linux backend ("mooni"). */
 export interface DeviceProfile {
   id: string;
   name: string; // friendly label, e.g. "Laptop Kamar"

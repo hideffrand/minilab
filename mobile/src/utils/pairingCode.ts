@@ -1,9 +1,9 @@
 import { PairingPayload } from "../types";
 
-// Prefix makes it easy to eyeball "yep that's a minilab pairing code" and
+// Prefix makes it easy to eyeball "yep that's a mooni pairing code" and
 // lets us reject garbage input with a friendly error instead of a cryptic
 // JSON parse failure.
-const PREFIX = "MINILAB1:";
+const PREFIX = "MOONI1:";
 
 export function encodePairingCode(payload: PairingPayload): string {
   const json = JSON.stringify(payload);
@@ -35,7 +35,7 @@ export function decodePairingCode(code: string): PairingPayload {
     throw new Error("Pairing code is missing required information.");
   }
   return {
-    name: parsed.name || "Minilab",
+    name: parsed.name || "Mooni",
     baseUrl: String(parsed.baseUrl).replace(/\/+$/, ""),
     apiKey: String(parsed.apiKey),
   };

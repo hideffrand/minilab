@@ -1,4 +1,4 @@
-# Minilab
+# Mooni
 
 Control your Linux server (or just your own laptop) from your phone — over
 Tailscale, so everything stays private and you don't have to open any ports

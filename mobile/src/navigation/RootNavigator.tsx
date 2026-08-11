@@ -29,7 +29,7 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 // Pushes the ShareUpload modal whenever the app is opened from a system
-// share sheet (e.g. gallery → share → Minilab).
+// share sheet (e.g. gallery → share → Mooni).
 function ShareIntentGate({
   navigationRef,
 }: {
@@ -87,7 +87,7 @@ export default function RootNavigator() {
           name="Home"
           component={HomeScreen}
           options={({ navigation }) => ({
-            title: activeDevice?.name ?? "Minilab",
+            title: activeDevice?.name ?? "Mooni",
             headerRight: () => (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
                 <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
@@ -126,7 +126,7 @@ export default function RootNavigator() {
         <Stack.Screen
           name="ShareUpload"
           component={ShareUploadScreen}
-          options={{ title: "Upload to Minilab", presentation: "modal" }}
+          options={{ title: "Upload to Mooni", presentation: "modal" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

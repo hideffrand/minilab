@@ -1,4 +1,4 @@
-module minilab-backend
+module mooni-backend
 
 go 1.22
 

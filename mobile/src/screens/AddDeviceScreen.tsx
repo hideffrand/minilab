@@ -157,9 +157,9 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
         {mode === "paste" ? (
           <View>
             <Text style={styles.hint}>
-              Ask the person managing your minilab for a "pairing code" (shown
+              Ask the person managing your mooni for a "pairing code" (shown
               when they run install.sh, or via{" "}
-              <Text style={styles.mono}>./minilab-backend -pair</Text>). Scan
+              <Text style={styles.mono}>./mooni-backend -pair</Text>). Scan
               the QR, or paste the code manually below.
             </Text>
 
@@ -179,7 +179,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               style={[styles.input, styles.codeInput]}
               value={pairingCode}
               onChangeText={setPairingCode}
-              placeholder="MINILAB1:xxxxxxxxxxxx..."
+              placeholder="MOONI1:xxxxxxxxxxxx..."
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
@@ -232,7 +232,7 @@ export default function AddDeviceScreen({ route, navigation }: Props) {
               style={styles.input}
               value={apiKey}
               onChangeText={setApiKey}
-              placeholder="MINILAB_API_KEY from the backend"
+              placeholder="MOONI_API_KEY from the backend"
               placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}

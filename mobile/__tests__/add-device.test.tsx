@@ -12,7 +12,7 @@ const navigation = {
   push: jest.fn(),
 } as any;
 
-const STORAGE_KEY = "minilab.devices.v1";
+const STORAGE_KEY = "mooni.devices.v1";
 
 beforeEach(async () => {
   await AsyncStorage.clear();

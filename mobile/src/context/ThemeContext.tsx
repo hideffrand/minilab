@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const STORAGE_KEY = "minilab.theme.v1";
+const STORAGE_KEY = "mooni.theme.v1";
 
 export type ThemeMode = "dark" | "light";
 

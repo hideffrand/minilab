@@ -1,4 +1,4 @@
-# Minilab Backend — API
+# Mooni Backend — API
 
 Go backend with **one external dependency** (`github.com/skip2/go-qrcode`,
 used only to render the pairing QR code in the terminal — everything else is
@@ -24,12 +24,12 @@ This script automatically:
 - Optionally installs it as a systemd service (auto-start on boot)
 - Optionally grants **passwordless sudo for just `systemctl reboot` and
   `systemctl poweroff`** so the app's Reboot/Shutdown buttons work — a scoped
-  rule in `/etc/sudoers.d/minilab-power` (validated with `visudo -cf`), nothing
+  rule in `/etc/sudoers.d/mooni-power` (validated with `visudo -cf`), nothing
   else gets sudo
 - **Prints the QR code + pairing code text** in the terminal
 
-Configuration is stored at `~/.minilab/config.env` (mode 600), and the last
-pairing code at `~/.minilab/last-pairing-code.txt` (mode 600) — neither can be
+Configuration is stored at `~/.mooni/config.env` (mode 600), and the last
+pairing code at `~/.mooni/last-pairing-code.txt` (mode 600) — neither can be
 read by other users.
 
 ## Pairing — two ways, both from one command
@@ -43,14 +43,14 @@ Scan this QR from the app (Add Device > Scan QR):
 
 Or paste manually (Add Device > Paste Code):
 
-MINILAB1:eyJuYW1lIjoiTGFwdG9wIFRlc3QiLCJiYXNlVXJsIjoi...
+MOONI1:eyJuYW1lIjoiTGFwdG9wIFRlc3QiLCJiYXNlVXJsIjoi...
 ```
 
 1. **Scan QR** — open the app → **Add Device** → **Scan QR Code** → point
    your camera at the QR shown in the terminal. Fastest, and ideal for people
    who don't want to type or paste anything.
 2. **Paste manually** — if the camera struggles to read the terminal screen
-   (reflections, small resolution, etc.), the `MINILAB1:...` text below the QR
+   (reflections, small resolution, etc.), the `MOONI1:...` text below the QR
    can be copied and pasted straight into the "Paste Code" mode.
 
 Both contain the exact same payload (device name, server URL, API key) —
@@ -64,7 +64,7 @@ Want to give access to another phone (e.g. family)? Regenerate anytime without
 re-running the setup:
 
 ```bash
-source ~/.minilab/config.env && ./minilab-backend -pair -name "Family Phone"
+source ~/.mooni/config.env && ./mooni-backend -pair -name "Family Phone"
 ```
 
 ## API Features
@@ -90,7 +90,7 @@ source ~/.minilab/config.env && ./minilab-backend -pair -name "Family Phone"
 - `POST /api/system/shutdown` — power the machine off. Same requirement as
   reboot.
 
-All paths are **relative to `MINILAB_ROOT_DIR`** and sanitized so they can
+All paths are **relative to `MOONI_ROOT_DIR`** and sanitized so they can
 never escape that folder (protection against path traversal `../`, absolute
 paths, and symlinks pointing outside the root). Uploads are capped at 2 GiB
 per file, and large uploads are not cut off by a timeout (request bodies are
@@ -107,19 +107,19 @@ Needs Go 1.22+. If you don't have it on Mint: `sudo apt install golang-go`
 
 ```bash
 cd agent
-go build -o minilab-backend .   # Go downloads go-qrcode once (needs internet)
+go build -o mooni-backend .   # Go downloads go-qrcode once (needs internet)
 
-export MINILAB_ROOT_DIR=/home/you/minilab-storage
-export MINILAB_API_KEY=$(openssl rand -hex 24)
-export MINILAB_PORT=8080
+export MOONI_ROOT_DIR=/home/you/mooni-storage
+export MOONI_API_KEY=$(openssl rand -hex 24)
+export MOONI_PORT=8080
 
-./minilab-backend
+./mooni-backend
 ```
 
 Generate a pairing code + QR manually:
 
 ```bash
-./minilab-backend -pair -name "My Laptop" -host $(tailscale ip -4)
+./mooni-backend -pair -name "My Laptop" -host $(tailscale ip -4)
 ```
 
 (The `-host` flag is optional — if omitted, the backend tries to auto-detect
@@ -138,19 +138,19 @@ need** to open any ports on your router/public firewall.
 ## Run automatically at boot
 
 `install.sh` can set this up for you (answer "y" when asked). To do it
-manually, create `/etc/systemd/system/minilab-backend.service`:
+manually, create `/etc/systemd/system/mooni-backend.service`:
 
 ```ini
 [Unit]
-Description=Minilab Backend
+Description=Mooni Backend
 After=network-online.target tailscaled.service
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=you
-EnvironmentFile=/home/you/.minilab/config.env
-ExecStart=/home/you/agent/minilab-backend
+EnvironmentFile=/home/you/.mooni/config.env
+ExecStart=/home/you/agent/mooni-backend
 Restart=on-failure
 
 [Install]
@@ -159,8 +159,8 @@ WantedBy=multi-user.target
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now minilab-backend
-sudo systemctl status minilab-backend
+sudo systemctl enable --now mooni-backend
+sudo systemctl status mooni-backend
 ```
 
 ## Uninstall
@@ -174,11 +174,11 @@ cd agent
 
 It removes, in order:
 1. **systemd service** — stops, disables, and deletes
-   `/etc/systemd/system/minilab-backend.service` (skipped if never installed).
-2. **Power-control sudoers rule** — removes `/etc/sudoers.d/minilab-power`
+   `/etc/systemd/system/mooni-backend.service` (skipped if never installed).
+2. **Power-control sudoers rule** — removes `/etc/sudoers.d/mooni-power`
    (the passwordless-sudo rule that powered the Reboot/Shutdown buttons).
-3. **Built binary** — `agent/minilab-backend`.
-4. **Config folder** `~/.minilab/` — API key + saved pairing codes (this is
+3. **Built binary** — `agent/mooni-backend`.
+4. **Config folder** `~/.mooni/` — API key + saved pairing codes (this is
    what un-pairs the phones).
 
 **Your files are untouched by default.** The script lists the paired storage
@@ -186,7 +186,7 @@ folder and asks, by number, whether to keep the files or delete them too:
 
 ```
 Paired folders:
-  [1] /home/you/minilab-storage
+  [1] /home/you/mooni-storage
 What should uninstall do with the files in it?
   1) Keep all files — just uninstall (recommended)
   2) Uninstall AND permanently delete all files in [1]
@@ -204,27 +204,27 @@ remove it manually if you want: `sudo apt remove golang-go`.
 Equivalent steps by hand:
 
 ```bash
-sudo systemctl stop minilab-backend 2>/dev/null || true
-sudo systemctl disable minilab-backend 2>/dev/null || true
-sudo rm -f /etc/systemd/system/minilab-backend.service
+sudo systemctl stop mooni-backend 2>/dev/null || true
+sudo systemctl disable mooni-backend 2>/dev/null || true
+sudo rm -f /etc/systemd/system/mooni-backend.service
 sudo systemctl daemon-reload
-sudo rm -f /etc/sudoers.d/minilab-power
-rm -f /home/you/agent/minilab-backend
-rm -rf ~/.minilab            # config + API key + saved pairing codes
-# Your files under MINILAB_ROOT_DIR are untouched — delete them only if you
+sudo rm -f /etc/sudoers.d/mooni-power
+rm -f /home/you/agent/mooni-backend
+rm -rf ~/.mooni            # config + API key + saved pairing codes
+# Your files under MOONI_ROOT_DIR are untouched — delete them only if you
 # deliberately want them gone:
-# rm -rf /home/you/minilab-storage
+# rm -rf /home/you/mooni-storage
 ```
 
 ## Security notes
 
-- Store `MINILAB_API_KEY` (and the pairing code/QR, since it contains the API
+- Store `MOONI_API_KEY` (and the pairing code/QR, since it contains the API
   key) safely — anyone with it can read/write/delete all files inside
-  `MINILAB_ROOT_DIR`, and, if power control is enabled, reboot or shut down
-  the machine. `install.sh` stores it at `~/.minilab/config.env` with
-  permission `600` (and the `~/.minilab` folder itself is `700`). Don't
+  `MOONI_ROOT_DIR`, and, if power control is enabled, reboot or shut down
+  the machine. `install.sh` stores it at `~/.mooni/config.env` with
+  permission `600` (and the `~/.mooni` folder itself is `700`). Don't
   screenshot the QR/code in the terminal and save it carelessly either.
-- All file endpoints are sandboxed to `MINILAB_ROOT_DIR`: path traversal
+- All file endpoints are sandboxed to `MOONI_ROOT_DIR`: path traversal
   (`../`, absolute paths) and **symlinks pointing outside the root** are
   rejected — you can't access files outside that folder even with a
   manipulated path.

@@ -1,4 +1,4 @@
-# Minilab Control — Mobile App
+# Mooni Control — Mobile App
 
 Expo + React Native + TypeScript. Typecheck-clean (`npx tsc --noEmit`).
 **Target: Android first** — iOS is not a priority yet.
@@ -138,8 +138,8 @@ Prerequisites (one-time):
 Build:
 
 ```bash
-git clone <repo-url> minilab
-cd minilab/mobile
+git clone <repo-url> mooni
+cd mooni/mobile
 npm install
 npx expo prebuild --platform android   # generates the android/ project locally
 cd android

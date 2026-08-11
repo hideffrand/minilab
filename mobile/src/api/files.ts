@@ -44,29 +44,61 @@ export async function deleteItem(client: AxiosInstance, path: string) {
   await client.delete("/api/files/delete", { data: { path } });
 }
 
+export type UploadProgressCallback = (bytesSent: number, totalBytes: number) => void;
+
 /**
  * Uploads a local file (picked via expo-document-picker) into `destDir`
- * on the server using multipart/form-data. Uses expo-file-system's
- * uploadAsync so large files stream instead of loading fully into memory.
+ * on the server using multipart/form-data.
+ *
+ * Uses expo-file-system's createUploadTask (rather than uploadAsync) because
+ * only the task variant exposes a progress callback — needed to drive
+ * per-file progress bars in the UI. Returns an object with an `uploadAsync`
+ * to kick things off and a `cancel` to abort mid-flight if ever needed.
  */
+export function createFileUpload(
+  baseUrl: string,
+  apiKey: string,
+  destDir: string,
+  localUri: string,
+  onProgress?: UploadProgressCallback
+) {
+  const url = `${baseUrl}/api/files/upload`;
+  const task = FileSystem.createUploadTask(
+    url,
+    localUri,
+    {
+      httpMethod: "POST",
+      uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+      fieldName: "file",
+      parameters: { path: destDir },
+      headers: { "X-API-Key": apiKey },
+    },
+    onProgress
+      ? (data) => onProgress(data.totalBytesSent, data.totalBytesExpectedToSend)
+      : undefined
+  );
+
+  return {
+    uploadAsync: async (): Promise<void> => {
+      const result = await task.uploadAsync();
+      if (!result || result.status < 200 || result.status >= 300) {
+        throw new Error(`Upload failed (${result?.status}): ${result?.body ?? "no response"}`);
+      }
+    },
+    cancel: () => task.cancelAsync(),
+  };
+}
+
+/** Convenience wrapper for a single fire-and-await upload with progress. */
 export async function uploadFile(
   baseUrl: string,
   apiKey: string,
   destDir: string,
-  localUri: string
+  localUri: string,
+  onProgress?: UploadProgressCallback
 ): Promise<void> {
-  const url = `${baseUrl}/api/files/upload`;
-  const result = await FileSystem.uploadAsync(url, localUri, {
-    httpMethod: "POST",
-    uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-    fieldName: "file",
-    mimeType: undefined,
-    parameters: { path: destDir },
-    headers: { "X-API-Key": apiKey },
-  });
-  if (result.status < 200 || result.status >= 300) {
-    throw new Error(`Upload failed (${result.status}): ${result.body}`);
-  }
+  const { uploadAsync } = createFileUpload(baseUrl, apiKey, destDir, localUri, onProgress);
+  await uploadAsync();
 }
 
 /**

@@ -37,6 +37,14 @@ type Props = NativeStackScreenProps<RootStackParamList, "FileBrowser">;
 type ViewMode = "list" | "grid";
 type SortField = "name" | "size" | "date";
 type SortDir = "asc" | "desc";
+type UploadStatus = "uploading" | "done" | "error";
+interface UploadItem {
+  id: string;
+  name: string;
+  progress: number; // 0..1
+  status: UploadStatus;
+  error?: string;
+}
 
 const IMAGE_EXT = ["jpg", "jpeg", "png", "gif", "webp", "bmp"];
 
@@ -94,6 +102,67 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
   const [renameTarget, setRenameTarget] = useState<FileEntry | null>(null);
   const [moveTarget, setMoveTarget] = useState<FileEntry | null>(null);
   const [copyTarget, setCopyTarget] = useState<FileEntry | null>(null);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+
+  const patchUpload = (id: string, patch: Partial<UploadItem>) =>
+    setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)));
+
+  const dismissUpload = (id: string) =>
+    setUploads((prev) => prev.filter((u) => u.id !== id));
+
+  // Auto-clear finished uploads a couple seconds after they complete,
+  // but leave failed ones in place until the person dismisses them.
+  useEffect(() => {
+    const doneIds = uploads.filter((u) => u.status === "done").map((u) => u.id);
+    if (doneIds.length === 0) return;
+    const timer = setTimeout(() => {
+      setUploads((prev) => prev.filter((u) => !doneIds.includes(u.id)));
+    }, 1800);
+    return () => clearTimeout(timer);
+  }, [uploads]);
+
+  const handleUpload = async () => {
+    if (!activeDevice) return;
+    const picked = await DocumentPicker.getDocumentAsync({
+      copyToCacheDirectory: true,
+      multiple: true,
+    });
+    if (picked.canceled || !picked.assets?.length) return;
+
+    const items: UploadItem[] = picked.assets.map((a) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: a.name,
+      progress: 0,
+      status: "uploading",
+    }));
+    setUploads((prev) => [...prev, ...items]);
+
+    // Sequential rather than Promise.all: keeps progress bars readable,
+    // avoids hammering the device with N parallel multipart streams, and
+    // means one failure doesn't abort uploads already in flight.
+    for (let i = 0; i < picked.assets.length; i++) {
+      const asset = picked.assets[i];
+      const item = items[i];
+      try {
+        await uploadFile(
+          activeDevice.baseUrl,
+          activeDevice.apiKey,
+          currentPath,
+          asset.uri,
+          (sent, total) => {
+            patchUpload(item.id, { progress: total > 0 ? sent / total : 0 });
+          }
+        );
+        patchUpload(item.id, { progress: 1, status: "done" });
+      } catch (e: any) {
+        patchUpload(item.id, {
+          status: "error",
+          error: e?.response?.data?.error ?? e.message ?? "Upload failed",
+        });
+      }
+    }
+    await load();
+  };
 
   useEffect(() => {
     navigation.setOptions({ title: currentPath || "/ (root)" });
@@ -190,30 +259,6 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
       setCopyTarget(target);
     } else {
       setMoveTarget(target);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!activeDevice) return;
-    const picked = await DocumentPicker.getDocumentAsync({
-      copyToCacheDirectory: true,
-      multiple: false,
-    });
-    if (picked.canceled || !picked.assets?.length) return;
-    const asset = picked.assets[0];
-    setBusy(true);
-    try {
-      await uploadFile(
-        activeDevice.baseUrl,
-        activeDevice.apiKey,
-        currentPath,
-        asset.uri
-      );
-      await load();
-    } catch (e: any) {
-      Alert.alert("Upload failed", e.message);
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -471,7 +516,7 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
             },
           },
           {
-            label: "Upload File",
+            label: "Upload Files",
             onPress: () => {
               setFabMenuVisible(false);
               handleUpload();
@@ -480,6 +525,67 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
         ]}
         onCancel={() => setFabMenuVisible(false)}
       />
+
+      {uploads.length > 0 && (
+        <View style={styles.uploadPanel} pointerEvents="box-none">
+          {uploads.map((u) => (
+            <View key={u.id} style={styles.uploadRow}>
+              <Ionicons
+                name={
+                  u.status === "done"
+                    ? "checkmark-circle"
+                    : u.status === "error"
+                      ? "alert-circle"
+                      : "cloud-upload-outline"
+                }
+                size={18}
+                color={
+                  u.status === "done"
+                    ? colors.primary
+                    : u.status === "error"
+                      ? colors.dangerText
+                      : colors.textSecondary
+                }
+              />
+
+              <View style={{ flex: 1 }}>
+                <Text style={styles.uploadName} numberOfLines={1}>
+                  {u.name}
+                </Text>
+                {u.status === "error" ? (
+                  <Text style={styles.uploadError} numberOfLines={1}>
+                    {u.error}
+                  </Text>
+                ) : (
+                  <View style={styles.uploadTrack}>
+                    <View
+                      style={[
+                        styles.uploadFill,
+                        {
+                          width: `${Math.round(u.progress * 100)}%`,
+                          backgroundColor: u.status === "done" ? colors.primary : colors.primary,
+                        },
+                      ]}
+                    />
+                  </View>
+                )}
+              </View>
+
+              {u.status === "uploading" && (
+                <Text style={styles.uploadPct}>{Math.round(u.progress * 100)}%</Text>
+              )}
+              {u.status === "done" && (
+                <Ionicons name="checkmark" size={16} color={colors.primary} />
+              )}
+              {u.status === "error" && (
+                <TouchableOpacity onPress={() => dismissUpload(u.id)} hitSlop={8}>
+                  <Ionicons name="close" size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
 
       <TouchableOpacity
         style={styles.fab}
@@ -495,6 +601,44 @@ export default function FileBrowserScreen({ route, navigation }: Props) {
 function makeStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
+    uploadPanel: {
+      position: "absolute",
+      left: 12,
+      right: 12,
+      bottom: 90, // sits just above the FAB
+      gap: 8,
+    },
+    uploadRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 5,
+      elevation: 4,
+    },
+    uploadName: { color: colors.text, fontSize: 13, fontWeight: "600" },
+    uploadError: { color: colors.dangerText, fontSize: 11, marginTop: 2 },
+    uploadTrack: {
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.surface,
+      marginTop: 6,
+      overflow: "hidden",
+    },
+    uploadFill: { height: "100%", borderRadius: 2 },
+    uploadPct: {
+      color: colors.textSecondary,
+      fontSize: 11,
+      fontWeight: "600",
+      width: 32,
+      textAlign: "right",
+    },
 
     // -- top bar (home / current path / filter / view toggle) --
     topBar: {

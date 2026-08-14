@@ -101,6 +101,22 @@ read without a deadline).
 All `/api/files/*` and `/api/system/*` endpoints require the header
 `X-API-Key: <your api key>`.
 
+## Windows WSL
+
+`install.sh` detects WSL and adjusts accordingly:
+
+- **Auto-start (systemd):** WSL only runs systemd if `/etc/wsl.conf` has
+  `[boot]` / `systemd=true` (then restart with `wsl --shutdown`). Without it,
+  the script skips the service and prints the manual-run command instead.
+- **Power control (Reboot/Shutdown):** skipped on WSL — `systemctl reboot` /
+  `poweroff` would only restart or shut down the WSL distro, never Windows.
+  Reboot Windows from the Windows side (`shutdown /r`).
+- **Reaching the server from your phone:** WSL's default NAT networking gives
+  the distro an IP your phone can't reach directly. Either enable mirrored
+  networking in `%UserProfile%\.wslconfig` (`[wsl2] networkingMode=mirrored`),
+  forward the port from Windows with `netsh interface portproxy`, or use
+  Tailscale. The script prints full instructions at install time.
+
 ## Manual Setup (if you don't want to use install.sh)
 
 Needs Go 1.22+. If you don't have it on Mint: `sudo apt install golang-go`

@@ -24,7 +24,7 @@ Share-sheet uploads (`ShareUploadScreen`, `expo-share-intent`; intent filters in
 ## Backend runtime (gotcha)
 
 Server **refuses to start** without env: `MOONI_ROOT_DIR` and `MOONI_API_KEY` are required; `MOONI_PORT` optional (default 8080).
-- One-shot setup + pairing: `./install.sh` (installs Go if missing, generates key, writes `~/.mooni/config.env` mode 600, optional systemd service, optionally adds a scoped passwordless-sudo rule for `systemctl reboot`/`poweroff` in `/etc/sudoers.d/mooni-power`, prints QR/pairing code).
+- One-shot setup + pairing: `./install.sh` (installs Go if missing, generates key, writes `~/.mooni/config.env` mode 600, optional systemd service, optionally adds a scoped passwordless-sudo rule for `systemctl reboot`/`poweroff` in `/etc/sudoers.d/mooni-power`, prints QR/pairing code). On WSL it detects the env: skips the systemd service when systemd isn't PID 1, skips the power-control sudoers rule (can't reboot Windows from WSL), and prints mirrored-networking/portproxy guidance so the phone can reach the server.
 - Uninstall: `./uninstall.sh` (stops/removes the systemd service and sudoers rule, removes the binary and `~/.mooni` config; lists the paired storage folder and only deletes it if the user picks that option AND types `DELETE` — never automatically).
 - Quick rerun after setup: `source ~/.mooni/config.env && go run .`
 - Regenerate pairing code any time: `./mooni-backend -pair -name "..." [-host <ip>]` (auto-detects Tailscale IP via `tailscale ip -4`, falls back to LAN IP, then `127.0.0.1`).

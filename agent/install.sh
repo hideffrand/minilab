@@ -25,6 +25,22 @@ confirm() {
   [[ "$ans" =~ ^[Yy]$ ]]
 }
 
+# Windows Subsystem for Linux affects setup in two ways:
+#   - systemd (PID 1) is not running unless enabled in /etc/wsl.conf
+#   - default NAT networking means a phone on the LAN can't reach the WSL IP
+IS_WSL=0
+if grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null; then
+  IS_WSL=1
+  echo "Windows WSL detected."
+fi
+
+# systemd runs as PID 1 on a normal Linux box, and on WSL only when
+# /etc/wsl.conf has [boot] systemd=true.
+HAS_SYSTEMD=0
+if [[ -d /run/systemd/system ]]; then
+  HAS_SYSTEMD=1
+fi
+
 echo "Mooni Backend — Setup"
 echo "======================="
 
@@ -139,8 +155,36 @@ else
   read -rp "Enter a manual IP/host for the pairing code (leave empty for auto): " TS_IP
 fi
 
+if [[ "$IS_WSL" == "1" ]]; then
+  echo
+  echo "WSL networking note: the phone must be able to reach this machine."
+  echo "  - With default NAT networking, the auto-detected IP is the WSL VM's NAT"
+  echo "    address, which the phone cannot reach directly. Fix it one of these ways:"
+  echo "      1) Mirrored networking — create %UserProfile%\\.wslconfig containing:"
+  echo "           [wsl2]"
+  echo "           networkingMode=mirrored"
+  echo "         then 'wsl --shutdown' from Windows and reopen this terminal. The"
+  echo "         pairing code below then uses the Windows host's LAN IP."
+  echo "      2) Port forwarding on Windows (run in an admin prompt):"
+  echo "           netsh interface portproxy add v4tov4 listenaddress=0.0.0.0"
+  echo "             listenport=$MOONI_PORT connectaddress=<WSL IP> connectport=$MOONI_PORT"
+  echo "      3) Tailscale on both machines (auto-detected if installed)."
+  echo
+fi
+
 # Optional: install as a systemd service (auto-start on boot)
 if confirm "Run automatically at boot via systemd?" "y/N"; then
+  if [[ "$HAS_SYSTEMD" != "1" ]]; then
+    echo "systemd is not running as PID 1 here — the service can't be installed."
+    if [[ "$IS_WSL" == "1" ]]; then
+      echo "In WSL, enable systemd first — add to /etc/wsl.conf:"
+      echo "  [boot]"
+      echo "  systemd=true"
+      echo "then run 'wsl --shutdown' from Windows and reopen this terminal."
+    fi
+    echo "Run manually instead:"
+    echo "  source $CONFIG_FILE && $BIN_PATH"
+  else
   SERVICE_FILE="/etc/systemd/system/mooni-backend.service"
   sudo bash -c "cat > $SERVICE_FILE" <<EOF
 [Unit]
@@ -161,15 +205,19 @@ EOF
   sudo systemctl daemon-reload
   sudo systemctl enable --now mooni-backend
   echo "systemd service active. Check status: sudo systemctl status mooni-backend"
+  fi
 else
   echo "Skipping systemd. Run manually with:"
   echo "  source $CONFIG_FILE && $BIN_PATH"
 fi
 
 # Optional: grant passwordless sudo so the app's Reboot/Shutdown buttons work.
-# The backend runs as $USER, so this rule must match the service user. Only
-# the two power commands are whitelisted — nothing else gets passwordless sudo.
-if confirm "Allow the app to reboot/shutdown this machine (needs sudo)?" "y/N"; then
+# Skipped on WSL: systemctl reboot/poweroff would only restart/shut down the
+# WSL distro, never the Windows host, so the rule would be useless there.
+if [[ "$IS_WSL" == "1" ]]; then
+  echo "Skipping power control (WSL): the app's Reboot/Shutdown can't reboot Windows"
+  echo "from inside WSL. Reboot Windows from the Windows side (e.g. 'shutdown /r')."
+elif confirm "Allow the app to reboot/shutdown this machine (needs sudo)?" "y/N"; then
   SYSTEMCTL="$(command -v systemctl)"
   if [[ -z "$SYSTEMCTL" ]]; then
     echo "systemctl not found — power control not configured."

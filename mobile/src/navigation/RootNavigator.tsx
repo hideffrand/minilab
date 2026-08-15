@@ -11,6 +11,7 @@ import HomeScreen from "../screens/HomeScreen";
 import FileBrowserScreen from "../screens/FileBrowserScreen";
 import FilePreviewScreen from "../screens/FilePreviewScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import LegalScreen from "../screens/LegalScreen";
 import ShareUploadScreen from "../screens/ShareUploadScreen";
 import { useDevices } from "../context/DevicesContext";
 import { useTheme } from "../context/ThemeContext";
@@ -23,6 +24,7 @@ export type RootStackParamList = {
   FileBrowser: { path: string } | undefined;
   FilePreview: { path: string; name: string };
   Settings: undefined;
+  Legal: undefined;
   ShareUpload: undefined;
 };
 
@@ -122,6 +124,11 @@ export default function RootNavigator() {
           name="Settings"
           component={SettingsScreen}
           options={{ title: "Settings" }}
+        />
+        <Stack.Screen
+          name="Legal"
+          component={LegalScreen}
+          options={{ title: "Terms & Privacy" }}
         />
         <Stack.Screen
           name="ShareUpload"

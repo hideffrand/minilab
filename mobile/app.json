@@ -28,8 +28,7 @@
         "backgroundColor": "#111318"
       },
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.CAMERA"
       ]
     },
     "web": {
@@ -39,7 +38,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow camera access to scan the pairing QR code from the backend."
+          "cameraPermission": "Allow camera access to scan the pairing QR code from the backend.",
+          "recordAudioAndroid": false
         }
       ],
       "expo-secure-store",
@@ -48,7 +48,10 @@
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true
+            "usesCleartextTraffic": true,
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "buildToolsVersion": "35.0.0"
           }
         }
       ],
@@ -65,7 +68,8 @@
             "video/*"
           ]
         }
-      ]
+      ],
+      "./plugins/withPlayCompat"
     ],
     "extra": {
       "eas": {

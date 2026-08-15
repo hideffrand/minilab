@@ -1,5 +1,5 @@
 import { AxiosInstance } from "axios";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { ListResponse } from "../types";
 
 export async function listFiles(

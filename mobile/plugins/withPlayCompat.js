@@ -1,6 +1,5 @@
 const {
   withAndroidManifest,
-  withAndroidStyles,
 } = require("expo/config-plugins");
 
 const REMOVE_PERMISSIONS = [
@@ -35,25 +34,6 @@ module.exports = function withPlayCompatibility(config) {
       });
     }
     manifest.manifest["uses-permission"] = usesPermission;
-    return config;
-  });
-
-  config = withAndroidStyles(config, (config) => {
-    const resource = config.modResults.resources;
-    if (!resource || !resource.style) return config;
-
-    const item = {
-      $: { name: "android:windowOptOutEdgeToEdgeEnforcement" },
-      _: "true",
-    };
-    for (const style of resource.style) {
-      const styleName = style.$ && style.$.name;
-      if (styleName !== "AppTheme" && styleName !== "Theme.App.SplashScreen") {
-        continue;
-      }
-      style.item = style.item || [];
-      style.item.push(item);
-    }
     return config;
   });
 

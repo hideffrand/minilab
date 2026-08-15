@@ -35,7 +35,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 function ShareIntentGate({
   navigationRef,
 }: {
-  navigationRef: React.RefObject<NavigationContainerRef<RootStackParamList>>;
+  navigationRef: React.RefObject<NavigationContainerRef<RootStackParamList> | null>;
 }) {
   const { hasShareIntent } = useShareIntentContext();
   useEffect(() => {

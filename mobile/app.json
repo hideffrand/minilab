@@ -48,10 +48,7 @@
         "expo-build-properties",
         {
           "android": {
-            "usesCleartextTraffic": true,
-            "compileSdkVersion": 35,
-            "targetSdkVersion": 35,
-            "buildToolsVersion": "35.0.0"
+            "usesCleartextTraffic": true
           }
         }
       ],
@@ -69,7 +66,8 @@
           ]
         }
       ],
-      "./plugins/withPlayCompat"
+      "./plugins/withPlayCompat",
+      "expo-asset"
     ],
     "extra": {
       "eas": {

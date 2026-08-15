@@ -1,22 +1,23 @@
 # Google Play Store — Submission Checklist
 
-Status: **re-audited Aug 15, 2026** after permission/targetSdk fixes. Target: pass Play review.
+Status: **Expo SDK 54 upgrade DONE Aug 15, 2026** (was the hard blocker). Remaining: build AAB, verify 16 KB alignment, Play Console tasks.
 
-Quick state: `targetSdk 35` (compileSdk 35, buildTools 35.0.0), cleartext HTTP on, unneeded permissions stripped via `mobile/plugins/withPlayCompat.js` (config plugin). Remaining **hard blocker is 16 KB page-size support** → Expo SDK upgrade. Details below.
+Quick state: **Expo SDK 54** (RN 0.81, React 19.1), default `targetSdk 36` / `compileSdk 36` (RN 0.81 template default; no `expo-build-properties` override needed), New Architecture on, cleartext HTTP on, unneeded permissions stripped via `mobile/plugins/withPlayCompat.js` (config plugin). 16 KB page-size support comes with RN 0.76+ → SDK 54 satisfies it; must still be **verified on the built AAB**. Details below.
 
 ## Blockers (must fix — submission rejected / policy violation)
 
-- [ ] **Upgrade Expo SDK (SDK 52+; prefer newest, e.g. 54/55)**
-  - Two independent Play requirements collide with Expo SDK 51:
-    1. **16 KB page size** — since **Nov 1, 2025** all apps targeting Android 15+ (API 35) must support 16 KB pages on 64-bit devices. RN 0.74/Expo 51 ships 4 KB-aligned native libs → AAB **fails the Play check**. First RN with support: 0.76 (= Expo SDK 52). This is why the AAB we build today cannot be submitted.
-    2. **Target API 36** — from **Aug 31, 2026** new apps/updates must target Android 16 (API 36). SDK 52/53 default to API 35; SDK 54+ defaults to API 36. To submit *after* Aug 31 without an extension, you need targetSdk 36 → SDK 54+.
-  - The interim `targetSdk 35` bump stays (policy-required groundwork; kept in `expo-build-properties`).
-  - Migration notes (verified against SDK 53/54 changelogs):
-    - `expo-av` is deprecated (SDK 53), **removed in SDK 55** → migrate to `expo-video` (audio → `expo-audio`, not used here). Do this before or with the upgrade.
-    - New Architecture is **default in SDK 52+ (new projects), everywhere in SDK 53**; SDK 55 will be New-Arch-only (legacy arch frozen in RN 0.80, opt-out removed in 0.82). Verify `expo-camera`, `expo-share-intent`, `expo-local-authentication` behave on New Arch.
-    - **Edge-to-edge becomes mandatory in SDK 54** (targets API 36; `windowOptOutEdgeToEdgeEnforcement` is deprecated and disabled on API 36). Remove the current opt-out when upgrading and verify safe-area insets render correctly (`react-native-safe-area-context` already a dep).
-  - Re-test preview/streaming/share/biometric after the upgrade.
-- [ ] **Verify 16 KB alignment on the release AAB** (SDK 52+ build)
+- [x] **Upgrade Expo SDK → 54** (DONE; branch `backup/pre-sdk54`)
+  - 16 KB page size and target API 36 both satisfied: SDK 54 = RN 0.81 (16 KB-aligned native libs) and defaults to targetSdk 36 (Android 16, required from Aug 31, 2026).
+  - Migration completed and verified:
+    - `expo-av` **removed** → `expo-video` (`~3.0.16`) migrated in `FilePreviewScreen.tsx` (`useVideoPlayer` + `VideoView`, `contentFit="contain"`). This also dropped the `MODIFY_AUDIO_SETTINGS` permission (was expo-av's).
+    - `expo-file-system` → import switched to `expo-file-system/legacy` (SDK 54 moved the old API; upload-task/download code unchanged).
+    - All expo packages reconciled to SDK 54 pins (`expo install --fix`); `expo-share-intent` bumped `^2.7.0` → `^5.0.0` (expo `^54` peer); `babel-preset-expo` + `expo-asset` added (transitive, were missing).
+    - **Edge-to-edge opt-out removed** from `plugins/withPlayCompat.js` (API 36 disables the opt-out anyway; SDK 54 ships edge-to-edge support).
+    - `expo-build-properties` pin to SDK 35 removed — RN 0.81 default targetSdk/compileSdk 36 applies.
+    - React 19.1: `useRef<T>(null)` now `RefObject<T | null>` → `ShareIntentGate` prop type updated in `RootNavigator.tsx`.
+  - Verified: `expo-doctor` 18/18, `tsc --noEmit` clean, jest 2/2, Metro export bundles (Hermes `.hbc`).
+  - Re-test on device in **release** build: pair → files → preview (video/audio) → share-upload → biometric power control.
+- [ ] **Verify 16 KB alignment on the release AAB** (SDK 54 build)
   - Run Google's `check_elf_alignment.sh` against the AAB; expect `ALIGNED` for all `arm64-v8a` libs. Do this before first upload — Play's first signal is the "16 KB native library alignment" review comment.
 - [ ] **Privacy policy URL** — required (CAMERA = sensitive permission). **In-app Terms & Privacy screen is done** (`mobile/src/screens/LegalScreen.tsx`, reachable via Settings → Terms & Privacy); the *publicly reachable URL* for Play Console still needs hosting (GitHub Pages etc.). Use the same text from the screen.
 - [ ] **Submit AAB, never APK**
@@ -50,24 +51,24 @@ Quick state: `targetSdk 35` (compileSdk 35, buildTools 35.0.0), cleartext HTTP o
 
 ## Done / verified (Aug 2026)
 
-- [x] **targetSdk/compileSdk 35, buildTools 35.0.0** — via `expo-build-properties` (`mobile/app.json`)
+- [x] **targetSdk/compileSdk 36** — RN 0.81 (SDK 54) template default; no override needed (removed the SDK-35 `expo-build-properties` pins). `minSdk` is now 24 (RN 0.81 default, was 23).
 - [x] **Cleartext HTTP enabled** (`usesCleartextTraffic: true`) — release manifest now allows `http://<ip>:8080` (traffic rides encrypted Tailscale tunnel; justified)
-- [x] **Unused permissions stripped** — `RECORD_AUDIO` (camera QR only; `recordAudioAndroid: false` + expo-av source), `READ/WRITE_EXTERNAL_STORAGE` (expo-file-system legacy), `SYSTEM_ALERT_WINDOW` (Expo base template) — all removed via `tools:node="remove"` in `plugins/withPlayCompat.js`
-  - Final merged permissions: `CAMERA`, `INTERNET`, `MODIFY_AUDIO_SETTINGS`, `USE_BIOMETRIC`, `USE_FINGERPRINT`, `VIBRATE` — all justified. Note: `MODIFY_AUDIO_SETTINGS` comes from `expo-av`'s plugin; `USE_FINGERPRINT` is the legacy duplicate of `USE_BIOMETRIC` (both added by `expo-local-authentication`, harmless but redundant). Both permissions disappear with the SDK 54+ migration (`expo-av` → `expo-video` drops `MODIFY_AUDIO_SETTINGS`; `expo-local-authentication` drops `USE_FINGERPRINT`).
-- [x] **Edge-to-edge handled for API 35** — `android:windowOptOutEdgeToEdgeEnforcement=true` added to `AppTheme` + `Theme.App.SplashScreen` (SDK 51 doesn't handle enforced edge-to-edge; opt-out is the interim fix). **Remove on SDK 54 upgrade** — API 36 disables the opt-out and forces edge-to-edge.
+- [x] **Unused permissions stripped** — `RECORD_AUDIO` (camera QR only; `recordAudioAndroid: false`), `READ/WRITE_EXTERNAL_STORAGE` (expo-file-system legacy), `SYSTEM_ALERT_WINDOW` (Expo base template) — all removed via `tools:node="remove"` in `plugins/withPlayCompat.js`
+  - Final merged permissions (SDK 54, re-verified via introspect): `CAMERA`, `INTERNET`, `USE_BIOMETRIC`, `USE_FINGERPRINT`, `VIBRATE` — all justified. `MODIFY_AUDIO_SETTINGS` gone (was expo-av's, removed with the migration). `USE_FINGERPRINT` is the legacy duplicate of `USE_BIOMETRIC` (both from `expo-local-authentication`, harmless but redundant).
+- [x] **Edge-to-edge** — SDK 54 ships edge-to-edge support; the SDK-51 opt-out (`windowOptOutEdgeToEdgeEnforcement`) was **removed** from `plugins/withPlayCompat.js` (API 36 disables the opt-out anyway). Verify safe-area insets on device.
 - [x] Runtime permissions minimal (camera only), proper permission message
 - [x] API keys in `expo-secure-store` (encrypted), not AsyncStorage
 - [x] Versioning: `versionCode` auto-increment (EAS), `version 1.0.1`
 - [x] No ad/analytics/third-party SDKs
 - [x] Icons 1024×1024 + adaptive icon
-- [x] 64-bit ABIs included (AAB splits per device); Hermes on; `minSdk 23`
+- [x] 64-bit ABIs included (AAB splits per device); Hermes on; `minSdk 24`
 - [x] `expo-font` plugin (release crash on Add Device fixed)
 - [x] **In-app Terms & Privacy screen** — `LegalScreen.tsx` (Settings → Terms & Privacy), theme-aware; covers no-data-collection, on-device keys, server-side files, power-control risk, permissions
 
 ## Suggested order
 
-1. **Expo SDK upgrade** (52+ now for 16 KB; 54+ if submitting after Aug 31, 2026) — its own session; incl. `expo-av` → `expo-video` (removed in SDK 55) and edge-to-edge opt-out removal
-2. Build `production` AAB, run `check_elf_alignment.sh`, test full flow in **release** (pair → files → health)
+1. ~~**Expo SDK upgrade**~~ **DONE** (SDK 54: 16 KB + targetSdk 36; `expo-av`→`expo-video`, edge-to-edge, `expo-file-system/legacy`, React 19 fixes)
+2. Build `production` AAB, run `check_elf_alignment.sh`, test full flow in **release** (pair → files → preview → share-upload → health)
 3. Start 14-day closed test (≥12 testers) — runs on calendar in parallel
 4. Play Console: privacy policy, data-safety, content rating, screenshots, listing
 

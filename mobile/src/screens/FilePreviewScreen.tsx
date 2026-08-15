@@ -9,7 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { Video, ResizeMode } from "expo-av";
+import { VideoView, useVideoPlayer, VideoSource } from "expo-video";
 import * as Sharing from "expo-sharing";
 import { Ionicons } from "@expo/vector-icons";
 import { RootStackParamList } from "../navigation/RootNavigator";
@@ -28,6 +28,19 @@ const AUDIO_EXT = ["mp3", "wav", "aac", "flac", "ogg"];
 function extOf(name: string): string {
   const parts = name.split(".");
   return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : "";
+}
+
+function MediaPlayer({
+  source,
+  style,
+}: {
+  source: VideoSource;
+  style: object;
+}) {
+  const player = useVideoPlayer(source, (player) => {
+    player.loop = false;
+  });
+  return <VideoView player={player} style={style} nativeControls contentFit="contain" />;
 }
 
 export default function FilePreviewScreen({ route }: Props) {
@@ -76,27 +89,22 @@ export default function FilePreviewScreen({ route }: Props) {
             resizeMode="contain"
           />
         ) : VIDEO_EXT.includes(ext) ? (
-          <Video
+          <MediaPlayer
             source={{
               uri: previewUri,
               headers: { "X-API-Key": activeDevice?.apiKey ?? "" },
             }}
             style={styles.video}
-            useNativeControls
-            resizeMode={ResizeMode.CONTAIN}
-            shouldPlay={false}
           />
         ) : AUDIO_EXT.includes(ext) ? (
           <View style={styles.center}>
             <Ionicons name="musical-notes-outline" size={56} color={colors.text} style={styles.bigIcon} />
-            <Video
+            <MediaPlayer
               source={{
                 uri: previewUri,
                 headers: { "X-API-Key": activeDevice?.apiKey ?? "" },
               }}
-              style={{ width: 1, height: 1 }}
-              useNativeControls
-              shouldPlay={false}
+              style={styles.audioPlayer}
             />
             <Text style={styles.fileName}>{name}</Text>
           </View>
@@ -135,6 +143,7 @@ function makeStyles(colors: ThemeColors) {
     previewArea: { flex: 1, alignItems: "center", justifyContent: "center" },
     image: { width: "100%", height: "100%" },
     video: { width: "100%", height: 300 },
+    audioPlayer: { width: 240, height: 48, marginBottom: 12 },
     center: { alignItems: "center", padding: 24 },
     bigIcon: { fontSize: 56, marginBottom: 12 },
     btnRow: { flexDirection: "row", alignItems: "center", gap: 8 },

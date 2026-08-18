@@ -169,12 +169,19 @@ echo "Build finished: $BIN_PATH"
 
 # 8. IP for the pairing code (Tailscale -> manual -> auto LAN IP in the backend)
 say "8/8 Detect IP"
+if ! command -v tailscale >/dev/null 2>&1; then
+  echo "Tailscale is not installed — a Tailscale IP is required for the pairing code."
+  echo "Install Tailscale first (https://tailscale.com/download), log in with 'tailscale up',"
+  echo "then run this script again."
+  exit 1
+fi
 TS_IP=""
-if command -v tailscale >/dev/null 2>&1 && TS_IP="$(tailscale ip -4 2>/dev/null || true)" && [[ -n "$TS_IP" ]]; then
+if TS_IP="$(tailscale ip -4 2>/dev/null || true)" && [[ -n "$TS_IP" ]]; then
   echo "Tailscale IP detected: $TS_IP"
 else
-  echo "Tailscale not detected. If left empty, the backend will automatically use the LAN IP."
-  read -rp "Enter a manual IP/host for the pairing code (leave empty for auto): " TS_IP
+  echo "Tailscale is installed but not running or not logged in — the phone won't be able to"
+  echo "reach this machine. Run 'tailscale up' to log in, then run this script again."
+  exit 1
 fi
 
 if [[ "$IS_WSL" == "1" ]]; then

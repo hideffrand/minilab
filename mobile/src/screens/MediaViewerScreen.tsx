@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  SafeAreaView,
   useWindowDimensions,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { VideoView, useVideoPlayer, VideoSource } from "expo-video";
 import * as Sharing from "expo-sharing";

@@ -69,7 +69,7 @@ else
 fi
 
 # 3. Folder the app is allowed to manage
-say "3/8 Allowed folder"
+say "3/8 Folders"
 echo "Note: the app gets full read/write/delete access to whatever folder you pick."
 
 if [[ -n "${MOONI_ROOT_DIR:-}" && -d "${MOONI_ROOT_DIR:-}" ]]; then
@@ -106,6 +106,25 @@ fi
 mkdir -p "$MOONI_ROOT_DIR"
 echo "Root dir: $MOONI_ROOT_DIR"
 
+# Optional: Photos-style media library in a separate folder (images/videos only)
+if [[ -n "${MOONI_MEDIA_DIR:-}" && -d "${MOONI_MEDIA_DIR:-}" ]]; then
+  echo "Current media dir (from previous config): $MOONI_MEDIA_DIR"
+  if ! confirm "Keep the media library in this folder?" "Y/n"; then
+    MOONI_MEDIA_DIR=""
+  fi
+fi
+
+if [[ -z "${MOONI_MEDIA_DIR:-}" ]]; then
+  if confirm "Enable a separate Photos-style media library (images & videos in one folder)?" "y/N"; then
+    read -rp "Media folder path [$HOME/Pictures]: " MEDIA_INPUT
+    MOONI_MEDIA_DIR="${MEDIA_INPUT:-$HOME/Pictures}"
+    mkdir -p "$MOONI_MEDIA_DIR"
+    echo "Media dir: $MOONI_MEDIA_DIR"
+  else
+    echo "Media library disabled."
+  fi
+fi
+
 # 4. API key (reuse the previous one if it exists)
 say "4/8 API key"
 if [[ -z "${MOONI_API_KEY:-}" ]]; then
@@ -138,6 +157,9 @@ MOONI_ROOT_DIR=$MOONI_ROOT_DIR
 MOONI_API_KEY=$MOONI_API_KEY
 MOONI_PORT=$MOONI_PORT
 EOF
+if [[ -n "${MOONI_MEDIA_DIR:-}" ]]; then
+  echo "MOONI_MEDIA_DIR=$MOONI_MEDIA_DIR" >> "$CONFIG_FILE"
+fi
 chmod 600 "$CONFIG_FILE"
 echo "Config saved to $CONFIG_FILE (mode 600)"
 

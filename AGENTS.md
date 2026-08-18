@@ -2,8 +2,8 @@
 
 Monorepo-lite of two **independent** projects, tracked by one root git repo (no CI, no lint):
 
-- `mobile/` — Expo (SDK 51) + React Native 0.74 + TypeScript mobile app.
-- `agent/` — Go 1.22+ HTTP API. Only external dep: `go-qrcode` (used solely for the terminal QR in `-pair` mode). Optional `go-redis/v9` enables response caching via `MOONI_REDIS_ADDR`/`MOONI_REDIS_PASSWORD`; without them the server runs uncached.
+- `mobile/` — Expo (SDK 54) + React Native 0.81 + TypeScript mobile app.
+- `agent/` — Go 1.22+ HTTP API. External deps: `go-qrcode` (terminal QR in `-pair` mode) and `go-redis/v9` (optional: response caching via `MOONI_REDIS_ADDR`/`MOONI_REDIS_PASSWORD`; unset → server runs uncached).
 
 ## Verify / build
 
@@ -11,7 +11,7 @@ Backend (no env vars needed for build/vet/test):
 ```bash
 cd agent && go vet ./... && go test ./... && go build -o mooni-backend .
 ```
-Only Go tests so far: `internal/system/stats_test.go`, `internal/system/confirm_test.go`.
+Go tests: `internal/files/cache_test.go`, `internal/media/media_test.go`, `internal/system/confirm_test.go`, `internal/system/stats_test.go`.
 
 App — no lint script. Typecheck is the real gate; a jest suite exists too:
 ```bash
@@ -24,7 +24,7 @@ Share-sheet uploads (`ShareUploadScreen`, `expo-share-intent`; intent filters in
 ## Backend runtime (gotcha)
 
 Server **refuses to start** without env: `MOONI_ROOT_DIR` and `MOONI_API_KEY` are required; `MOONI_PORT` optional (default 8080).
-- Optional: `MOONI_MEDIA_DIR` (a dedicated folder for the Photos-style media library; unset → `/api/media/*` not registered), `MOONI_REDIS_ADDR`/`MOONI_REDIS_PASSWORD` (Redis cache; unset → uncached). Thumbnails are cached on disk under `~/.mooni/thumbs/`.
+- Optional: `MOONI_MEDIA_DIR` (a dedicated folder for the Photos-style media library; unset → `/api/media/*` not registered). `install.sh` prompts for it during setup; you can also add it to `~/.mooni/config.env` by hand (the dir must already exist). `MOONI_REDIS_ADDR`/`MOONI_REDIS_PASSWORD` (Redis cache; unset → uncached). Thumbnails are cached on disk under `~/.mooni/thumbs/`.
 - One-shot setup + pairing: `./install.sh` (installs Go if missing, generates key, writes `~/.mooni/config.env` mode 600, optional systemd service, optionally adds a scoped passwordless-sudo rule for `systemctl reboot`/`poweroff` in `/etc/sudoers.d/mooni-power`, prints QR/pairing code). On WSL it detects the env: skips the systemd service when systemd isn't PID 1, skips the power-control sudoers rule (can't reboot Windows from WSL), and prints mirrored-networking/portproxy guidance so the phone can reach the server.
 - Uninstall: `./uninstall.sh` (stops/removes the systemd service and sudoers rule, removes the binary and `~/.mooni` config; lists the paired storage folder and only deletes it if the user picks that option AND types `DELETE` — never automatically).
 - Quick rerun after setup: `source ~/.mooni/config.env && go run .`

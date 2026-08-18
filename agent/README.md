@@ -92,6 +92,11 @@ source ~/.mooni/config.env && ./mooni-backend -pair -name "Family Phone"
   `install.sh` (or a local console session for `loginctl`).
 - `POST /api/system/shutdown` — power the machine off. Same requirement as
   reboot.
+- `GET  /api/media/list` — Photos-style media library index (see below).
+- `GET  /api/media/thumb?path=...` — downscaled image thumbnail.
+- `GET  /api/media/preview?path=...` — stream a media file (Range support).
+- `POST /api/media/upload` — multipart upload (`file`, one or more).
+- `POST /api/media/delete` — `{"paths": [...]}` bulk delete.
 
 All paths are **relative to `MOONI_ROOT_DIR`** and sanitized so they can
 never escape that folder (protection against path traversal `../`, absolute
@@ -131,6 +136,9 @@ go build -o mooni-backend .   # Go downloads go-qrcode once (needs internet)
 export MOONI_ROOT_DIR=/home/you/mooni-storage
 export MOONI_API_KEY=$(openssl rand -hex 24)
 export MOONI_PORT=8080
+# Optional — a dedicated folder for the Photos-style media library. Unset to
+# disable the media feature (see "Media library" below).
+export MOONI_MEDIA_DIR=/home/you/mooni-media
 # Optional — see "Redis caching" below. Skip both lines to run uncached.
 export MOONI_REDIS_ADDR=127.0.0.1:6379
 export MOONI_REDIS_PASSWORD=  # optional, if Redis requires auth
@@ -146,6 +154,33 @@ Generate a pairing code + QR manually:
 
 (The `-host` flag is optional — if omitted, the backend tries to auto-detect
 via `tailscale ip -4`, then falls back to the LAN IP, then to `127.0.0.1`.)
+
+## Media library (optional)
+
+A Photos-style view over a **separate, dedicated folder** (`MOONI_MEDIA_DIR`) —
+the app's Media tab is not the file manager and never sees `MOONI_ROOT_DIR`.
+Enable it by pointing `MOONI_MEDIA_DIR` at an existing directory; without it,
+all `/api/media/*` endpoints are simply not registered (404) and the app's
+Media screen shows a "not enabled" notice.
+
+- **Library index** — `GET /api/media/list` walks the folder recursively for
+  images (jpg/jpeg/png/gif/bmp) and videos (mp4/mov/m4v/webm/mkv), returns them
+  newest-first as `{path, name, size, modTime, kind}`, and caches the result in
+  Redis (30s TTL) when available. Uploads/deletes invalidate immediately.
+- **Thumbnails** — `GET /api/media/thumb?path=...` returns a downscaled JPEG
+  (max 256px) generated with the Go standard library, cached on disk under
+  `~/.mooni/thumbs/` (keyed by content hash + modtime + size, so editing a file
+  regenerates its thumb). WebP is the one common format the stdlib can't
+  decode — the app falls back to the full preview for it.
+- **Preview** — `GET /api/media/preview?path=...` streams the full file via
+  `http.ServeContent` with HTTP Range support (video scrubbing in the app).
+- **Upload** — `POST /api/media/upload` (multipart `file` field, one or more)
+  saves files flat into the media directory. `filepath.Base` is applied to
+  filenames and every path goes through the same sandbox as the file API.
+- **Delete** — `POST /api/media/delete` with `{"paths":[...]}` bulk-deletes;
+  refuses to delete the media root itself.
+
+All media endpoints require `X-API-Key`, exactly like `/api/files/*`.
 
 ## Redis caching (optional)
 

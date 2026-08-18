@@ -21,29 +21,15 @@ type Config struct {
 	RedisAddr string
 	// RedisPassword is optional and only used when RedisAddr is set.
 	RedisPassword string
+	// MediaDir is a separate, optional directory for the media library
+	// (images/videos only). Empty means the media feature is disabled.
+	MediaDir string
 }
 
 func Load() (*Config, error) {
-	root := os.Getenv("MOONI_ROOT_DIR")
-	if root == "" {
-		return nil, fmt.Errorf("MOONI_ROOT_DIR is required (the folder this API is allowed to manage)")
-	}
-	absRoot, err := filepath.Abs(root)
+	root, err := resolveDir("MOONI_ROOT_DIR")
 	if err != nil {
-		return nil, fmt.Errorf("invalid MOONI_ROOT_DIR: %w", err)
-	}
-	info, err := os.Stat(absRoot)
-	if err != nil {
-		return nil, fmt.Errorf("MOONI_ROOT_DIR does not exist: %w", err)
-	}
-	if !info.IsDir() {
-		return nil, fmt.Errorf("MOONI_ROOT_DIR is not a directory: %s", absRoot)
-	}
-	// Resolve symlinks on the root itself so all sandbox comparisons inside
-	// fsutil operate on the same canonical path.
-	resolvedRoot, err := filepath.EvalSymlinks(absRoot)
-	if err != nil {
-		return nil, fmt.Errorf("resolving MOONI_ROOT_DIR: %w", err)
+		return nil, err
 	}
 
 	apiKey := os.Getenv("MOONI_API_KEY")
@@ -56,12 +42,47 @@ func Load() (*Config, error) {
 		port = "8080"
 	}
 
+	var mediaDir string
+	if m := os.Getenv("MOONI_MEDIA_DIR"); m != "" {
+		mediaDir, err = resolveDir("MOONI_MEDIA_DIR")
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &Config{
-		RootDir:        resolvedRoot,
+		RootDir:        root,
 		APIKey:         apiKey,
 		Port:           port,
 		MaxUploadBytes: 2 << 30, // 2 GiB
 		RedisAddr:      os.Getenv("MOONI_REDIS_ADDR"),
 		RedisPassword:  os.Getenv("MOONI_REDIS_PASSWORD"),
+		MediaDir:       mediaDir,
 	}, nil
+}
+
+// resolveDir validates that the env var `name` points at an existing
+// directory, returns its absolute path with symlinks resolved so all sandbox
+// comparisons operate on one canonical path.
+func resolveDir(name string) (string, error) {
+	raw := os.Getenv(name)
+	if raw == "" {
+		return "", fmt.Errorf("%s is required", name)
+	}
+	abs, err := filepath.Abs(raw)
+	if err != nil {
+		return "", fmt.Errorf("invalid %s: %w", name, err)
+	}
+	info, err := os.Stat(abs)
+	if err != nil {
+		return "", fmt.Errorf("%s does not exist: %w", name, err)
+	}
+	if !info.IsDir() {
+		return "", fmt.Errorf("%s is not a directory: %s", name, abs)
+	}
+	resolved, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return "", fmt.Errorf("resolving %s: %w", name, err)
+	}
+	return resolved, nil
 }

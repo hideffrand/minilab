@@ -8,6 +8,9 @@ on your router.
 
 - **File Manager** — browse folders, upload, download, rename, copy, move,
   delete, and preview photos & videos right from your phone.
+- **Media** — a Photos-style library (timeline grid grouped by date,
+  full-screen swipeable viewer with pinch-zoom, multi-select, gallery
+  upload) over a dedicated folder on the server.
 - **System Health** — a live dashboard of your server's CPU, memory, disk,
   load, uptime, and temperature.
 - **Power Control** — reboot or shut down your machine from the app, guarded

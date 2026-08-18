@@ -12,6 +12,19 @@ export interface ListResponse {
   entries: FileEntry[];
 }
 
+/** One image or video in the Photos-style media library (see /api/media). */
+export interface MediaItem {
+  path: string; // root-relative, forward-slashed
+  name: string;
+  size: number;
+  modTime: string;
+  kind: "image" | "video";
+}
+
+export interface MediaListResponse {
+  items: MediaItem[];
+}
+
 export interface ServerSettings {
   baseUrl: string; // e.g. http://100.x.x.x:8080  (your Tailscale IP)
   apiKey: string;

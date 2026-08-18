@@ -7,12 +7,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"mooni-backend/internal/auth"
 	"mooni-backend/internal/cache"
 	"mooni-backend/internal/config"
 	"mooni-backend/internal/files"
+	"mooni-backend/internal/media"
 	"mooni-backend/internal/pairing"
 	"mooni-backend/internal/system"
 )
@@ -62,13 +64,26 @@ func main() {
 
 	// Outer mux: health check stays public so the app (and you, with curl)
 	// can verify the server is reachable without a key; everything under
-	// /api/files/ and /api/system/ requires the key.
+	// /api/files/, /api/media/ and /api/system/ requires the key.
 	outer := http.NewServeMux()
 	outer.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 	outer.Handle("/api/files/", protectedFiles)
+	if cfg.MediaDir != "" {
+		// Media library (Photos-style) is optional: only exposed when the user
+		// points MOONI_MEDIA_DIR at a dedicated directory. Same auth wrapper —
+		// media endpoints read files off the host like the file ones.
+		mediaMux := http.NewServeMux()
+		mediaHandler := media.NewHandler(
+			media.NewService(cfg.MediaDir, c, thumbDir()),
+			cfg.MaxUploadBytes,
+		)
+		mediaHandler.Register(mediaMux)
+		outer.Handle("/api/media/", auth.RequireAPIKey(cfg.APIKey, mediaMux))
+		log.Printf("media library enabled (%s)", cfg.MediaDir)
+	}
 	outer.Handle("/api/system/", protectedSystem)
 
 	srv := &http.Server{
@@ -145,4 +160,14 @@ func logRequests(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 		log.Printf("%s %s %s", r.Method, r.URL.Path, time.Since(start))
 	})
+}
+
+// thumbDir returns where generated media thumbnails are cached on disk.
+// Outside MOONI_MEDIA_DIR so the library index never sees them; ~/.mooni/
+// matches where install.sh keeps config (mode 700).
+func thumbDir() string {
+	if home, err := os.UserHomeDir(); err == nil {
+		return filepath.Join(home, ".mooni", "thumbs")
+	}
+	return filepath.Join(os.TempDir(), "mooni-thumbs")
 }

@@ -23,6 +23,12 @@ Expo + React Native + TypeScript. Typecheck-clean (`npx tsc --noEmit`).
 - **File Preview**: preview images & videos (streaming, with seek support
   because the backend uses HTTP Range); other files can be downloaded and
   shared (share sheet) to other apps on the phone.
+- **Media (Photos-style library)**: a dedicated media timeline over a separate
+  folder on the server — a date-grouped grid of thumbnails, a full-screen
+  viewer you swipe through (pinch-to-zoom on images, inline video playback
+  with seek), long-press multi-select with bulk download/delete, and gallery
+  upload (multi-pick from the photo picker). Requires the backend to be started
+  with `MOONI_MEDIA_DIR`; otherwise the screen shows a "not enabled" notice.
 - **Home dashboard (first screen)**: live system health — CPU, memory, disk,
   load average, uptime, process count, and temperature — auto-refreshing
   every few seconds, with the selected device's name in the header.
@@ -58,9 +64,9 @@ paste.
 ## Expo Go vs Development Build
 
 All the dependencies in this project (`expo-camera`, `expo-file-system`,
-`expo-secure-store`, etc.) are standard native modules already bundled in
-**Expo Go** — so you can just run `npx expo start` and scan the Metro QR with
-the **Expo Go** app from the Play Store, no build needed.
+`expo-secure-store`, `expo-image-picker`, etc.) are standard native modules
+already bundled in **Expo Go** — so you can just run `npx expo start` and scan
+the Metro QR with the **Expo Go** app from the Play Store, no build needed.
 
 If you later want a **development build** (custom native code, or to make
 notifications/etc. closer to production), the project is ready:
@@ -95,14 +101,18 @@ they don't need to share a network).
 
 ```
 src/
-  api/             axios client + API functions (list, upload, system/power, etc.)
+  api/             axios client + API functions (list, upload, system/power, media)
   context/         DevicesContext — saved devices (AsyncStorage) &
                    each device's API key (expo-secure-store)
-  navigation/      React Navigation stack (DeviceList → Home → FileBrowser → FilePreview)
+  navigation/      React Navigation stack (DeviceList → Home → FileBrowser → FilePreview,
+                   Home → Media → MediaViewer)
   screens/         HomeScreen (dashboard: stats + device switcher + power),
-                   DeviceListScreen, AddDeviceScreen, FileBrowserScreen, FilePreviewScreen
+                   DeviceListScreen, AddDeviceScreen, FileBrowserScreen, FilePreviewScreen,
+                   MediaScreen (Photos-style timeline + multi-select + gallery upload),
+                   MediaViewerScreen (full-screen swipeable viewer)
   screens/components/  PromptModal (input dialog), ActionSheet (long-press menu,
-                   Android-safe), TypeToConfirmModal (type-a-token power confirm)
+                   Android-safe), TypeToConfirmModal (type-a-token power confirm),
+                   PinchZoomImage (pinch/pan/double-tap zoom, no extra deps)
   utils/           encode/decode pairing code (must stay in sync with internal/pairing in the backend)
   types/           shared TypeScript types
 ```

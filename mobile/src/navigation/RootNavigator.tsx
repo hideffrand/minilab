@@ -13,6 +13,9 @@ import FilePreviewScreen from "../screens/FilePreviewScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import LegalScreen from "../screens/LegalScreen";
 import ShareUploadScreen from "../screens/ShareUploadScreen";
+import MediaScreen from "../screens/MediaScreen";
+import MediaViewerScreen from "../screens/MediaViewerScreen";
+import { MediaItem } from "../types";
 import { useDevices } from "../context/DevicesContext";
 import { useTheme } from "../context/ThemeContext";
 
@@ -26,6 +29,8 @@ export type RootStackParamList = {
   Settings: undefined;
   Legal: undefined;
   ShareUpload: undefined;
+  Media: undefined;
+  MediaViewer: { items: MediaItem[]; initialIndex: number };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -134,6 +139,16 @@ export default function RootNavigator() {
           name="ShareUpload"
           component={ShareUploadScreen}
           options={{ title: "Upload to Mooni", presentation: "modal" }}
+        />
+        <Stack.Screen
+          name="Media"
+          component={MediaScreen}
+          options={{ title: "Media" }}
+        />
+        <Stack.Screen
+          name="MediaViewer"
+          component={MediaViewerScreen}
+          options={{ headerShown: false, presentation: "fullScreenModal" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

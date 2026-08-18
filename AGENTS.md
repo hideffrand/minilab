@@ -24,6 +24,7 @@ Share-sheet uploads (`ShareUploadScreen`, `expo-share-intent`; intent filters in
 ## Backend runtime (gotcha)
 
 Server **refuses to start** without env: `MOONI_ROOT_DIR` and `MOONI_API_KEY` are required; `MOONI_PORT` optional (default 8080).
+- Optional: `MOONI_MEDIA_DIR` (a dedicated folder for the Photos-style media library; unset → `/api/media/*` not registered), `MOONI_REDIS_ADDR`/`MOONI_REDIS_PASSWORD` (Redis cache; unset → uncached). Thumbnails are cached on disk under `~/.mooni/thumbs/`.
 - One-shot setup + pairing: `./install.sh` (installs Go if missing, generates key, writes `~/.mooni/config.env` mode 600, optional systemd service, optionally adds a scoped passwordless-sudo rule for `systemctl reboot`/`poweroff` in `/etc/sudoers.d/mooni-power`, prints QR/pairing code). On WSL it detects the env: skips the systemd service when systemd isn't PID 1, skips the power-control sudoers rule (can't reboot Windows from WSL), and prints mirrored-networking/portproxy guidance so the phone can reach the server.
 - Uninstall: `./uninstall.sh` (stops/removes the systemd service and sudoers rule, removes the binary and `~/.mooni` config; lists the paired storage folder and only deletes it if the user picks that option AND types `DELETE` — never automatically).
 - Quick rerun after setup: `source ~/.mooni/config.env && go run .`
@@ -41,7 +42,7 @@ Change the format in one → change the other. App code uses global `btoa`/`atob
 
 ## Security invariants (don't weaken)
 
-- All `/api/files/*` and `/api/system/*` require header `X-API-Key` (constant-time compare, `internal/auth/middleware.go`). `GET /api/health` is public. New `/api/system/*` endpoints must go through the same auth wrapper (they read the host).
+- All `/api/files/*`, `/api/media/*` and `/api/system/*` require header `X-API-Key` (constant-time compare, `internal/auth/middleware.go`). `GET /api/health` is public. New `/api/system/*` endpoints must go through the same auth wrapper (they read the host).
 - Every user path is sandboxed to `MOONI_ROOT_DIR` via `internal/fsutil/path.go` `Resolve()` — blocks `..`, absolute paths, AND symlinks pointing outside root (existing-path symlinks are resolved and re-checked). Upload filenames go through `filepath.Base`. Keep this boundary intact; new endpoints must go through `Resolve`.
 - App stores device API keys in `expo-secure-store`, NOT AsyncStorage (`DevicesContext` writes them per-device under `mooni.apikey.<id>`). The AsyncStorage device list is keyless; `DevicesContext` migrates any legacy inline key on load.
 - `/api/files/preview` streams via `http.ServeContent` (HTTP Range support enables video scrubbing) — don't replace with a plain file handler.
@@ -52,8 +53,8 @@ Change the format in one → change the other. App code uses global `btoa`/`atob
 
 - All paths are root-relative, forward-slashed (see `fsutil.ToRelative` and app `src/types/index.ts` `FileEntry`).
 - UI text, error messages, READMEs, and install.sh prompts are in English — keep new user-facing strings English.
-- App architecture: `src/api` (axios client + file ops + system/power), `src/context/DevicesContext.tsx` (persisted devices via AsyncStorage, API keys via SecureStore) and `ThemeContext.tsx` (dark/light, persisted in AsyncStorage key `mooni.theme.v1`), `src/navigation/RootNavigator.tsx`, `src/screens/`, `src/screens/components/` (`PromptModal`, `ActionSheet`, `TypeToConfirmModal`).
-- Navigation: initial route is **Home** when a device is active, else **DeviceList**. Stack: DeviceList → AddDevice / ScanQR, Home → FileBrowser → FilePreview / Settings, plus a `ShareUpload` modal pushed by `ShareIntentGate` (RootNavigator.tsx) when the app opens from the system share sheet. New screens must pull colors from `useTheme()` (theme-aware), not hardcode.
+- App architecture: `src/api` (axios client + file ops + system/power + media), `src/context/DevicesContext.tsx` (persisted devices via AsyncStorage, API keys via SecureStore) and `ThemeContext.tsx` (dark/light, persisted in AsyncStorage key `mooni.theme.v1`), `src/navigation/RootNavigator.tsx`, `src/screens/`, `src/screens/components/` (`PromptModal`, `ActionSheet`, `TypeToConfirmModal`, `PinchZoomImage`).
+- Navigation: initial route is **Home** when a device is active, else **DeviceList**. Stack: DeviceList → AddDevice / ScanQR, Home → FileBrowser → FilePreview / Settings, Home → Media → MediaViewer, plus a `ShareUpload` modal pushed by `ShareIntentGate` (RootNavigator.tsx) when the app opens from the system share sheet. New screens must pull colors from `useTheme()` (theme-aware), not hardcode.
 - App is **Android-first** — don't add iOS-only APIs (no `ActionSheetIOS`, no iOS-only styling). Long-press menus use the custom `ActionSheet` component because Android's `Alert` caps at 3 buttons.
 - App downloads/uploads stream via `expo-file-system` (`downloadAsync`/`uploadAsync`), not axios, for large files.
 - Power control (reboot/shutdown from Home) IS implemented. It's gated by the

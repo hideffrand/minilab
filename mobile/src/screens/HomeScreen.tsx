@@ -415,6 +415,32 @@ function FileManagerCard({
   );
 }
 
+function MediaLibraryCard({
+  colors,
+  onPress,
+}: {
+  colors: ThemeColors;
+  onPress: () => void;
+}) {
+  const styles = makeStyles(colors);
+  return (
+    <TouchableOpacity style={styles.card} activeOpacity={0.75} onPress={onPress}>
+      <View style={styles.fmTopRow}>
+        <View style={styles.fmBadge}>
+          <Ionicons name="images" size={24} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.menuTitle}>Media</Text>
+          <Text style={styles.menuSub}>Photos and videos library, like Google Photos</Text>
+        </View>
+        <View style={styles.fmOpenBtn}>
+          <Ionicons name="chevron-forward" size={18} color={colors.primary} />
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 export default function HomeScreen({ navigation }: Props) {
   const { devices, activeDevice, setActiveDeviceId } = useDevices();
   const { colors } = useTheme();
@@ -585,6 +611,10 @@ export default function HomeScreen({ navigation }: Props) {
           stats={stats}
           colors={colors}
           onPress={() => navigation.navigate("FileBrowser", { path: "" })}
+        />
+        <MediaLibraryCard
+          colors={colors}
+          onPress={() => navigation.navigate("Media")}
         />
       </View>
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"mooni-backend/internal/auth"
+	"mooni-backend/internal/cache"
 	"mooni-backend/internal/config"
 	"mooni-backend/internal/files"
 	"mooni-backend/internal/pairing"
@@ -31,9 +33,22 @@ func main() {
 		return
 	}
 
+	// Optional Redis-backed response cache. If Redis is unreachable at startup
+	// (or not configured at all) the server runs uncached, as before.
+	c := cache.New(cfg.RedisAddr, cfg.RedisPassword)
+	if c.Enabled() {
+		if err := c.Ping(context.Background()); err != nil {
+			log.Printf("redis unreachable (%v) — running without cache", err)
+			c.Close()
+			c = cache.New("", "")
+		} else {
+			log.Printf("redis cache enabled (%s)", cfg.RedisAddr)
+		}
+	}
+
 	// File routes live on their own mux, wrapped with the API key check.
 	fileMux := http.NewServeMux()
-	svc := files.NewService(cfg.RootDir)
+	svc := files.NewService(cfg.RootDir, c)
 	fileHandler := files.NewHandler(svc, cfg.MaxUploadBytes)
 	fileHandler.Register(fileMux)
 	protectedFiles := auth.RequireAPIKey(cfg.APIKey, fileMux)
@@ -41,7 +56,7 @@ func main() {
 	// System stats are sensitive (they read the host), so they get the same
 	// API key check, on their own /api/system/ mux.
 	systemMux := http.NewServeMux()
-	sysHandler := system.NewHandler(cfg.RootDir)
+	sysHandler := system.NewHandler(cfg.RootDir, c)
 	sysHandler.Register(systemMux)
 	protectedSystem := auth.RequireAPIKey(cfg.APIKey, systemMux)
 

@@ -72,7 +72,7 @@ func writeErr(w http.ResponseWriter, status int, err error) {
 
 func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Query().Get("path")
-	entries, err := h.svc.List(path)
+	entries, err := h.svc.List(r.Context(), path)
 	if err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
@@ -139,6 +139,7 @@ func (h *Handler) upload(w http.ResponseWriter, r *http.Request) {
 		}
 		saved = append(saved, fh.Filename)
 	}
+	h.svc.Invalidate(r.Context())
 	writeJSON(w, http.StatusOK, map[string]any{"uploaded": saved})
 }
 
@@ -191,7 +192,7 @@ func (h *Handler) mkdir(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
-	if err := h.svc.Mkdir(b.Path); err != nil {
+	if err := h.svc.Mkdir(r.Context(), b.Path); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
@@ -204,7 +205,7 @@ func (h *Handler) rename(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
-	if err := h.svc.Rename(b.OldPath, b.NewPath); err != nil {
+	if err := h.svc.Rename(r.Context(), b.OldPath, b.NewPath); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
@@ -217,7 +218,7 @@ func (h *Handler) copy(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
-	if err := h.svc.Copy(b.Src, b.Dst); err != nil {
+	if err := h.svc.Copy(r.Context(), b.Src, b.Dst); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
@@ -230,7 +231,7 @@ func (h *Handler) move(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
-	if err := h.svc.Move(b.Src, b.Dst); err != nil {
+	if err := h.svc.Move(r.Context(), b.Src, b.Dst); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
@@ -243,7 +244,7 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
-	if err := h.svc.Delete(b.Path); err != nil {
+	if err := h.svc.Delete(r.Context(), b.Path); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}

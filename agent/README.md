@@ -1,10 +1,13 @@
 # Mooni Backend — API
 
-Go backend with **one external dependency** (`github.com/skip2/go-qrcode`,
+Go backend with a **single required external dependency** (`github.com/skip2/go-qrcode`,
 used only to render the pairing QR code in the terminal — everything else is
-the standard library). Because it's a single small dependency, `go build` on
-your laptop stays as simple as usual (Go downloads it once and caches it
-locally, as long as there's internet during the first build).
+the standard library). The optional `github.com/redis/go-redis/v9` is only
+compiled in for the Redis cache described below and adds no runtime
+requirement unless you enable it. Because the required dependency is a single
+small one, `go build` on your laptop stays as simple as usual (Go downloads it
+once and caches it locally, as long as there's internet during the first
+build).
 
 ## Quick Setup (one script does everything)
 
@@ -70,7 +73,7 @@ source ~/.mooni/config.env && ./mooni-backend -pair -name "Family Phone"
 ## API Features
 
 - `GET  /api/health` — check the server is alive (no API key needed)
-- `GET  /api/files/list?path=...` — list folder contents
+- `GET  /api/files/list?path=...` — list folder contents (cached in Redis if enabled)
 - `GET  /api/files/download?path=...` — download a file
 - `GET  /api/files/preview?path=...` — stream a file (HTTP Range support → enables video scrubbing)
 - `POST /api/files/upload` — multipart upload (`file`, `path` = destination folder)
@@ -81,7 +84,7 @@ source ~/.mooni/config.env && ./mooni-backend -pair -name "Family Phone"
 - `DELETE /api/files/delete` — `{"path": "..."}`
 - `GET  /api/system/stats` — system health snapshot: CPU %, memory, disk, load
   average, uptime, process count, and CPU temperature (read straight from
-  `/proc` and sysfs, no external dependency)
+  `/proc` and sysfs, no external dependency; cached in Redis for 5s if enabled)
 - `POST /api/system/confirm-token` — issue a short-lived (60s), single-use
   confirm token used to authorize the power endpoints below.
 - `POST /api/system/reboot` — restart the machine. Requires a valid
@@ -128,6 +131,9 @@ go build -o mooni-backend .   # Go downloads go-qrcode once (needs internet)
 export MOONI_ROOT_DIR=/home/you/mooni-storage
 export MOONI_API_KEY=$(openssl rand -hex 24)
 export MOONI_PORT=8080
+# Optional — see "Redis caching" below. Skip both lines to run uncached.
+export MOONI_REDIS_ADDR=127.0.0.1:6379
+export MOONI_REDIS_PASSWORD=  # optional, if Redis requires auth
 
 ./mooni-backend
 ```
@@ -140,6 +146,36 @@ Generate a pairing code + QR manually:
 
 (The `-host` flag is optional — if omitted, the backend tries to auto-detect
 via `tailscale ip -4`, then falls back to the LAN IP, then to `127.0.0.1`.)
+
+## Redis caching (optional)
+
+The backend can cache two things in Redis to make the app feel snappier:
+
+- **File listings** (`GET /api/files/list`) — every directory listing is
+  cached for 60 seconds. Any API mutation (upload, mkdir, rename, copy,
+  move, delete) invalidates *all* cached listings immediately via a single
+  atomic version bump, so actions done from the app always show fresh data.
+  The TTL only covers changes made out-of-band (shell, SMB, another client).
+- **System stats** (`GET /api/system/stats`) — cached for 5 seconds, so an
+  auto-refreshing dashboard doesn't re-read `/proc` (and its ~200ms CPU
+  sample) on every poll.
+
+Enable it by pointing the agent at a running Redis server:
+
+```bash
+export MOONI_REDIS_ADDR=127.0.0.1:6379   # required to enable the cache
+export MOONI_REDIS_PASSWORD=             # only if Redis requires AUTH
+```
+
+Running via systemd? Add the same two lines to `~/.mooni/config.env` — the
+service already loads that file through `EnvironmentFile`.
+
+Without `MOONI_REDIS_ADDR` the agent runs exactly as before, uncached. If
+Redis is configured but unreachable at startup, the agent logs a warning and
+keeps running uncached — a Redis outage never breaks the file API.
+
+Downloads and previews are **never** cached: they stream from disk and rely
+on HTTP Range support for video/audio scrubbing.
 
 ## Access via Tailscale from your phone
 

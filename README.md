@@ -44,6 +44,12 @@ The script walks you through everything: picks the folder the app may
 access, generates a secret key, optionally allows reboot/shutdown from the
 app, and finishes by printing a **QR code + pairing code** in your terminal.
 
+Redis is optional but nice-to-have: if a Redis server is running, add
+`MOONI_REDIS_ADDR=127.0.0.1:6379` (and optionally `MOONI_REDIS_PASSWORD`) to
+`~/.mooni/config.env` and the agent will cache file listings and the health
+dashboard in it — see `agent/README.md` for details. Without it, everything
+works the same, just uncached.
+
 ### 2. Set up the app (on your phone)
 
 - For development: install **Expo Go** from the Play Store, then run

@@ -17,6 +17,10 @@ type Config struct {
 	Port string
 	// MaxUploadBytes limits the size of a single upload (default 2GB).
 	MaxUploadBytes int64
+	// RedisAddr, when non-empty, enables response caching via Redis.
+	RedisAddr string
+	// RedisPassword is optional and only used when RedisAddr is set.
+	RedisPassword string
 }
 
 func Load() (*Config, error) {
@@ -57,5 +61,7 @@ func Load() (*Config, error) {
 		APIKey:         apiKey,
 		Port:           port,
 		MaxUploadBytes: 2 << 30, // 2 GiB
+		RedisAddr:      os.Getenv("MOONI_REDIS_ADDR"),
+		RedisPassword:  os.Getenv("MOONI_REDIS_PASSWORD"),
 	}, nil
 }

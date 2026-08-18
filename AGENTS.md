@@ -3,7 +3,7 @@
 Monorepo-lite of two **independent** projects, tracked by one root git repo (no CI, no lint):
 
 - `mobile/` — Expo (SDK 51) + React Native 0.74 + TypeScript mobile app.
-- `agent/` — Go 1.22+ HTTP API. Only external dep: `go-qrcode` (used solely for the terminal QR in `-pair` mode).
+- `agent/` — Go 1.22+ HTTP API. Only external dep: `go-qrcode` (used solely for the terminal QR in `-pair` mode). Optional `go-redis/v9` enables response caching via `MOONI_REDIS_ADDR`/`MOONI_REDIS_PASSWORD`; without them the server runs uncached.
 
 ## Verify / build
 

@@ -4,15 +4,23 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
+
+	"mooni-backend/internal/cache"
 )
+
+// statsCacheTTL is short: stats are a polled dashboard, and CPU sampling
+// itself sleeps ~200ms, so caching a few seconds cuts both load and latency.
+const statsCacheTTL = 5 * time.Second
 
 type Handler struct {
 	rootDir string
 	confirm *confirmStore
+	cache   cache.Cache
 }
 
-func NewHandler(rootDir string) *Handler {
-	return &Handler{rootDir: rootDir, confirm: newConfirmStore()}
+func NewHandler(rootDir string, cache cache.Cache) *Handler {
+	return &Handler{rootDir: rootDir, confirm: newConfirmStore(), cache: cache}
 }
 
 func (h *Handler) Register(mux *http.ServeMux) {
@@ -23,13 +31,26 @@ func (h *Handler) Register(mux *http.ServeMux) {
 }
 
 func (h *Handler) stats(w http.ResponseWriter, r *http.Request) {
+	if b, ok := h.cache.Get(r.Context(), "mooni:system:stats"); ok {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(b)
+		return
+	}
 	s, err := Collect(h.rootDir)
 	if err != nil {
 		log.Println("system stats error:", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
 		return
 	}
-	writeJSON(w, http.StatusOK, s)
+	b, err := json.Marshal(s)
+	if err != nil {
+		log.Println("system stats marshal error:", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+		return
+	}
+	h.cache.Set(r.Context(), "mooni:system:stats", b, statsCacheTTL)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(b)
 }
 
 func (h *Handler) reboot(w http.ResponseWriter, r *http.Request) {

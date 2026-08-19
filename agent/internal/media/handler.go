@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"mooni-backend/internal/dto"
 	"mooni-backend/internal/fsutil"
 )
 
@@ -155,12 +156,8 @@ func (h *Handler) saveUpload(fh *multipart.FileHeader) error {
 	return err
 }
 
-type deleteBody struct {
-	Paths []string `json:"paths"`
-}
-
 func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
-	var b deleteBody
+	var b dto.MediaDeleteRequest
 	if err := decode(r, &b); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return

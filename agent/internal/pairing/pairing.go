@@ -9,19 +9,14 @@ import (
 	"strings"
 
 	qrcode "github.com/skip2/go-qrcode"
+	"mooni-backend/internal/dto"
 )
 
 const prefix = "MOONI1:"
 
-type Payload struct {
-	Name    string `json:"name"`
-	BaseURL string `json:"baseUrl"`
-	APIKey  string `json:"apiKey"`
-}
-
 // Encode produces the copy-pasteable code the mobile app understands
 // (see src/utils/pairingCode.ts on the app side — must stay in sync).
-func Encode(p Payload) string {
+func Encode(p dto.PairingPayload) string {
 	b, _ := json.Marshal(p)
 	return prefix + base64.StdEncoding.EncodeToString(b)
 }

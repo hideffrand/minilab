@@ -13,6 +13,7 @@ import (
 	"mooni-backend/internal/auth"
 	"mooni-backend/internal/cache"
 	"mooni-backend/internal/config"
+	"mooni-backend/internal/dto"
 	"mooni-backend/internal/files"
 	"mooni-backend/internal/media"
 	"mooni-backend/internal/pairing"
@@ -130,7 +131,7 @@ func runPair(cfg *config.Config, name, hostOverride string) {
 	}
 
 	baseURL := fmt.Sprintf("http://%s:%s", host, cfg.Port)
-	code := pairing.Encode(pairing.Payload{
+	code := pairing.Encode(dto.PairingPayload{
 		Name:    name,
 		BaseURL: baseURL,
 		APIKey:  cfg.APIKey,

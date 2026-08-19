@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"mooni-backend/internal/dto"
 )
 
 func TestParseCPUTimes(t *testing.T) {
@@ -61,7 +63,7 @@ func cpuTimesFrom(text string, line int) cpuTimes {
 	return cpuTimes{user: vals[0], nice: vals[1], system: vals[2], idle: vals[3], iowait: vals[4], irq: vals[5], softirq: vals[6], steal: vals[7]}
 }
 
-func memFrom(text string) MemStats {
+func memFrom(text string) dto.MemStats {
 	vals := map[string]int64{}
 	for _, line := range strings.Split(text, "\n") {
 		fields := strings.Fields(line)
@@ -79,7 +81,7 @@ func memFrom(text string) MemStats {
 	if avail == 0 {
 		avail = vals["MemFree"] + vals["Buffers"] + vals["Cached"]
 	}
-	out := MemStats{TotalBytes: total, AvailableBytes: avail}
+	out := dto.MemStats{TotalBytes: total, AvailableBytes: avail}
 	if total > 0 {
 		out.UsedPercent = (1 - float64(avail)/float64(total)) * 100
 	}

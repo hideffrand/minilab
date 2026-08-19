@@ -12,17 +12,9 @@ import (
 	"time"
 
 	"mooni-backend/internal/cache"
+	"mooni-backend/internal/dto"
 	"mooni-backend/internal/fsutil"
 )
-
-type Entry struct {
-	Name    string    `json:"name"`
-	Path    string    `json:"path"` // root-relative, forward-slashed
-	IsDir   bool      `json:"isDir"`
-	Size    int64     `json:"size"`
-	ModTime time.Time `json:"modTime"`
-	Mode    string    `json:"mode"`
-}
 
 type Service struct {
 	Root  string
@@ -48,7 +40,7 @@ func listKey(userPath string) string {
 
 type cachedList struct {
 	Version int64
-	Entries []Entry
+	Entries []dto.FileEntry
 }
 
 func NewService(root string, c cache.Cache) *Service {
@@ -62,7 +54,7 @@ func (s *Service) Invalidate(ctx context.Context) {
 }
 
 // cachedList returns a fresh-enough listing if one is cached.
-func (s *Service) cachedList(ctx context.Context, userPath string) ([]Entry, bool) {
+func (s *Service) cachedList(ctx context.Context, userPath string) ([]dto.FileEntry, bool) {
 	data, ok := s.cache.Get(ctx, listKey(userPath))
 	if !ok {
 		return nil, false
@@ -74,7 +66,7 @@ func (s *Service) cachedList(ctx context.Context, userPath string) ([]Entry, boo
 	return cl.Entries, true
 }
 
-func (s *Service) storeList(ctx context.Context, userPath string, entries []Entry) {
+func (s *Service) storeList(ctx context.Context, userPath string, entries []dto.FileEntry) {
 	b, err := json.Marshal(cachedList{Version: s.cache.GetInt64(ctx, listVerKey), Entries: entries})
 	if err != nil {
 		return
@@ -87,7 +79,7 @@ func (s *Service) resolve(userPath string) (string, error) {
 	return fsutil.Resolve(s.Root, userPath)
 }
 
-func (s *Service) List(ctx context.Context, userPath string) ([]Entry, error) {
+func (s *Service) List(ctx context.Context, userPath string) ([]dto.FileEntry, error) {
 	if entries, ok := s.cachedList(ctx, userPath); ok {
 		return entries, nil
 	}
@@ -99,14 +91,14 @@ func (s *Service) List(ctx context.Context, userPath string) ([]Entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := make([]Entry, 0, len(items))
+	out := make([]dto.FileEntry, 0, len(items))
 	for _, it := range items {
 		info, err := it.Info()
 		if err != nil {
 			continue // skip unreadable entries (broken symlinks etc.)
 		}
 		abs := filepath.Join(dir, it.Name())
-		out = append(out, Entry{
+		out = append(out, dto.FileEntry{
 			Name:    it.Name(),
 			Path:    fsutil.ToRelative(s.Root, abs),
 			IsDir:   it.IsDir(),
@@ -119,16 +111,16 @@ func (s *Service) List(ctx context.Context, userPath string) ([]Entry, error) {
 	return out, nil
 }
 
-func (s *Service) Stat(userPath string) (Entry, string, error) {
+func (s *Service) Stat(userPath string) (dto.FileEntry, string, error) {
 	abs, err := s.resolve(userPath)
 	if err != nil {
-		return Entry{}, "", err
+		return dto.FileEntry{}, "", err
 	}
 	info, err := os.Stat(abs)
 	if err != nil {
-		return Entry{}, "", err
+		return dto.FileEntry{}, "", err
 	}
-	return Entry{
+	return dto.FileEntry{
 		Name:    info.Name(),
 		Path:    fsutil.ToRelative(s.Root, abs),
 		IsDir:   info.IsDir(),

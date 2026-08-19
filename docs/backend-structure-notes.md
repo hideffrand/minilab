@@ -15,6 +15,7 @@ internal/
   config/    env → Config struct (validate dirs, resolve symlinks)
   auth/      RequireAPIKey — middleware, constant-time compare
   cache/     Cache interface + Redis impl (no-op when unconfigured)
+  dto/       wire types — one file per feature (files.go, media.go, system.go, pairing.go)
   files/     Handler + Service  — /api/files/*
   media/     Handler + Service  — /api/media/* (optional)
   system/    Handler + logic   — /api/system/*
@@ -147,7 +148,7 @@ Moni has two: handler → service, and the service calls `os.ReadDir`, `os.Renam
 
 ### 4. models/ + dto/ packages vs one type
 
-Pasted: `models.Inbox`, `dto.SendInbox` — persistence model and wire DTO split. Mooni: `Entry` (files/service.go:18) is both the domain object and the JSON payload (it has json tags). Correct for a file listing; the split only pays when the DB model and API shape actually diverge.
+Pasted: `models.Inbox`, `dto.SendInbox` — persistence model and wire DTO split, all DTOs flattened into one package. Mooni: no persistence model (the filesystem is the store), so wire types live in a single `internal/dto/` package split into one file per feature — `dto.FileEntry`, `dto.MediaItem`, `dto.SystemStats`, `dto.PairingPayload` — plus the small request bodies (`dto.PathRequest`, `dto.SrcDstRequest`, `dto.RenameRequest`, `dto.MediaDeleteRequest`). The models↔DTO split only pays when the DB model and API shape actually diverge; Mooni has one shape per entity, so one dto type each suffices.
 
 ### 5. The one interface mooni *does* keep — and why
 
@@ -160,7 +161,7 @@ Pasted: `models.Inbox`, `dto.SendInbox` — persistence model and wire DTO split
 | service abstraction | interface per feature | concrete struct |
 | interface owner | provider | consumer (cache only) |
 | data access | repo layer over sqlx | stdlib `os` directly |
-| models/DTO | split packages | one struct, json tags |
+| models/DTO | models + dto split | single `internal/dto/`, one file per feature |
 | interface purpose | mocking + swappable DB | test seam for infra |
 
 The hris style isn't wrong — it's the standard shape for DB-backed apps with real handler-test suites. Mooni dropped it because it's a two-layer filesystem server: there's no DB to abstract, no service to mock, and adding the interface/impl churn would serve no consumer. If Mooni later needs S3 backends or handler unit tests, *then* a consumer-defined `FileStore`/service interface appears — in the package that needs it.

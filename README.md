@@ -4,6 +4,8 @@ Control your Linux server (or just your own laptop) from your phone — over
 Tailscale, so everything stays private and you don't have to open any ports
 on your router.
 
+<img src="assets/screenshots/mooni-hero.jpg" alt="Mooni app screenshot" width="300">
+
 ## What you get
 
 - **File Manager** — browse folders, upload, download, rename, copy, move,

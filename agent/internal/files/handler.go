@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"mooni-backend/internal/dto"
 	"mooni-backend/internal/fsutil"
 )
 
@@ -169,25 +170,13 @@ func (h *Handler) saveUpload(destDir string, fh *multipart.FileHeader) error {
 	return err
 }
 
-type pathBody struct {
-	Path string `json:"path"`
-}
-type pairBody struct {
-	Src string `json:"src"`
-	Dst string `json:"dst"`
-}
-type renameBody struct {
-	OldPath string `json:"oldPath"`
-	NewPath string `json:"newPath"`
-}
-
 func decode(r *http.Request, v any) error {
 	defer r.Body.Close()
 	return json.NewDecoder(r.Body).Decode(v)
 }
 
 func (h *Handler) mkdir(w http.ResponseWriter, r *http.Request) {
-	var b pathBody
+	var b dto.PathRequest
 	if err := decode(r, &b); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
@@ -200,7 +189,7 @@ func (h *Handler) mkdir(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) rename(w http.ResponseWriter, r *http.Request) {
-	var b renameBody
+	var b dto.RenameRequest
 	if err := decode(r, &b); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
@@ -213,7 +202,7 @@ func (h *Handler) rename(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) copy(w http.ResponseWriter, r *http.Request) {
-	var b pairBody
+	var b dto.SrcDstRequest
 	if err := decode(r, &b); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
@@ -226,7 +215,7 @@ func (h *Handler) copy(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) move(w http.ResponseWriter, r *http.Request) {
-	var b pairBody
+	var b dto.SrcDstRequest
 	if err := decode(r, &b); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
@@ -239,7 +228,7 @@ func (h *Handler) move(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
-	var b pathBody
+	var b dto.PathRequest
 	if err := decode(r, &b); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return

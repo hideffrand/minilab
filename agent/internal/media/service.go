@@ -11,17 +11,9 @@ import (
 	"time"
 
 	"mooni-backend/internal/cache"
+	"mooni-backend/internal/dto"
 	"mooni-backend/internal/fsutil"
 )
-
-// Item is one image or video found in the media library.
-type Item struct {
-	Path    string    `json:"path"` // root-relative, forward-slashed
-	Name    string    `json:"name"`
-	Size    int64     `json:"size"`
-	ModTime time.Time `json:"modTime"`
-	Kind    string    `json:"kind"` // "image" | "video"
-}
 
 const (
 	KindImage = "image"
@@ -46,7 +38,7 @@ const (
 
 type cachedList struct {
 	Version int64
-	Items   []Item
+	Items   []dto.MediaItem
 }
 
 type Service struct {
@@ -65,12 +57,12 @@ func (s *Service) resolve(userPath string) (string, error) {
 }
 
 // List walks the media library and returns every image/video, newest first.
-func (s *Service) List(ctx context.Context) ([]Item, error) {
+func (s *Service) List(ctx context.Context) ([]dto.MediaItem, error) {
 	if items, ok := s.cachedList(ctx); ok {
 		return items, nil
 	}
 
-	var items []Item
+	var items []dto.MediaItem
 	err := filepath.WalkDir(s.Root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil // skip unreadable entries (broken symlinks, etc.)
@@ -94,7 +86,7 @@ func (s *Service) List(ctx context.Context) ([]Item, error) {
 		if err != nil {
 			return nil
 		}
-		items = append(items, Item{
+		items = append(items, dto.MediaItem{
 			Path:    fsutil.ToRelative(s.Root, path),
 			Name:    d.Name(),
 			Size:    info.Size(),
@@ -116,17 +108,17 @@ func (s *Service) List(ctx context.Context) ([]Item, error) {
 
 // Stat resolves userPath and returns the file's metadata plus its absolute
 // path (used by the preview handler to stream it with Range support).
-func (s *Service) Stat(userPath string) (Item, string, error) {
+func (s *Service) Stat(userPath string) (dto.MediaItem, string, error) {
 	abs, err := s.resolve(userPath)
 	if err != nil {
-		return Item{}, "", err
+		return dto.MediaItem{}, "", err
 	}
 	info, err := os.Stat(abs)
 	if err != nil {
-		return Item{}, "", err
+		return dto.MediaItem{}, "", err
 	}
 	if info.IsDir() {
-		return Item{}, "", &os.PathError{Op: "stat", Path: abs, Err: os.ErrInvalid}
+		return dto.MediaItem{}, "", &os.PathError{Op: "stat", Path: abs, Err: os.ErrInvalid}
 	}
 	ext := strings.ToLower(filepath.Ext(abs))
 	kind := ""
@@ -135,7 +127,7 @@ func (s *Service) Stat(userPath string) (Item, string, error) {
 	} else if videoExt[ext] {
 		kind = KindVideo
 	}
-	return Item{
+	return dto.MediaItem{
 		Path:    fsutil.ToRelative(s.Root, abs),
 		Name:    info.Name(),
 		Size:    info.Size(),
@@ -168,7 +160,7 @@ func (s *Service) Invalidate(ctx context.Context) {
 	s.cache.Incr(ctx, listVer)
 }
 
-func (s *Service) cachedList(ctx context.Context) ([]Item, bool) {
+func (s *Service) cachedList(ctx context.Context) ([]dto.MediaItem, bool) {
 	data, ok := s.cache.Get(ctx, listKey)
 	if !ok {
 		return nil, false
@@ -180,7 +172,7 @@ func (s *Service) cachedList(ctx context.Context) ([]Item, bool) {
 	return cl.Items, true
 }
 
-func (s *Service) storeList(ctx context.Context, items []Item) {
+func (s *Service) storeList(ctx context.Context, items []dto.MediaItem) {
 	b, err := json.Marshal(cachedList{Version: s.cache.GetInt64(ctx, listVer), Items: items})
 	if err != nil {
 		return

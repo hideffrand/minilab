@@ -9,44 +9,20 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"mooni-backend/internal/dto"
 )
-
-// Stats is the JSON payload returned by GET /api/system/stats.
-type Stats struct {
-	Hostname      string     `json:"hostname"`
-	OS            string     `json:"os"`
-	UptimeSeconds int64      `json:"uptimeSeconds"`
-	CPUPercent    float64    `json:"cpuPercent"`
-	LoadAvg       [3]float64 `json:"loadAvg"`
-	Memory        MemStats   `json:"memory"`
-	Disk          DiskStats  `json:"disk"`
-	Processes     int        `json:"processes"`
-	TempsCelsius  []float64  `json:"tempsCelsius"`
-}
-
-type MemStats struct {
-	TotalBytes     int64   `json:"totalBytes"`
-	AvailableBytes int64   `json:"availableBytes"`
-	UsedPercent    float64 `json:"usedPercent"`
-}
-
-type DiskStats struct {
-	TotalBytes     int64   `json:"totalBytes"`
-	UsedBytes      int64   `json:"usedBytes"`
-	AvailableBytes int64   `json:"availableBytes"`
-	UsedPercent    float64 `json:"usedPercent"`
-}
 
 // Collect gathers a snapshot of the machine's health from /proc and sysfs.
 // rootDir is used only to report the disk usage of the filesystem the app
 // actually manages. Returns an error if the host isn't Linux with /proc.
-func Collect(rootDir string) (Stats, error) {
+func Collect(rootDir string) (dto.SystemStats, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
-		return Stats{}, err
+		return dto.SystemStats{}, err
 	}
 
-	return Stats{
+	return dto.SystemStats{
 		Hostname:      hostname,
 		OS:            osName(),
 		UptimeSeconds: readUptime(),
@@ -173,8 +149,8 @@ func readLoadAvg() [3]float64 {
 	return out
 }
 
-func readMem() MemStats {
-	var out MemStats
+func readMem() dto.MemStats {
+	var out dto.MemStats
 	f, err := os.Open("/proc/meminfo")
 	if err != nil {
 		return out
@@ -201,15 +177,15 @@ func readMem() MemStats {
 	if avail == 0 {
 		avail = vals["MemFree"] + vals["Buffers"] + vals["Cached"]
 	}
-	out = MemStats{TotalBytes: total, AvailableBytes: avail}
+	out = dto.MemStats{TotalBytes: total, AvailableBytes: avail}
 	if total > 0 {
 		out.UsedPercent = (1 - float64(avail)/float64(total)) * 100
 	}
 	return out
 }
 
-func readDisk(rootDir string) DiskStats {
-	var out DiskStats
+func readDisk(rootDir string) dto.DiskStats {
+	var out dto.DiskStats
 	if rootDir == "" {
 		return out
 	}

@@ -168,6 +168,57 @@ The hris style isn't wrong — it's the standard shape for DB-backed apps with r
 
 ---
 
+## Q4. Why not use the `cmd/` + layered `handler/`/`service/`/`repository/`/`domain/` layout?
+
+Not the same thing as moni — the proposal mixes **two traditions**, and the layer split is a different organizing axis than a feature split.
+
+### Two traditions mixed
+
+1. **`cmd/`, `internal/`, `pkg/`** — from golang-standards/project-layout (2018, the most-forked Go repo). This is the "Go ecosystem consensus" part. Note: that layout keeps `internal/` organized **by feature/domain** (`internal/user/`), *not* by layer.
+2. **`handler/` + `service/` + `repository/` + `domain/` split** — that's **Clean Architecture / DDD** (Bob Martin, Eric Evans, Fowler), transplanted from Java/.NET. There, a class = one file and folders = namespaces, so layering across folders is natural. Go's package system is different: **a package is already a boundary** (naming + encapsulation + dependency), so splitting by technical role across packages cuts against it.
+
+### The real cost of horizontal (layered) layout
+
+**Feature work spans 3+ packages.** Adding `DELETE /api/users/:id` touches:
+
+```
+handler/http/user_handler.go      → decode, validate
+service/user_service.go           → orchestrate
+repository/postgres/user_repo.go  → SQL
+domain/user.go                    → maybe the interface
+```
+
+Moni's vertical layout: one folder (`files/` = `handler.go` + `service.go`). Change a feature → one package. Reason about a feature → one folder.
+
+**"domain owns the interface, repository implements it" = provider-defined interfaces** — the anti-pattern from Q3. Consumer-defined (moni's `cache.Cache`) keeps interfaces where they're used.
+
+**Package names become vague.** Every package is `handler`, `service`, `repository` — import aliases needed the moment two exist. Feature packages get real names: `files`, `media`, `system`, `pairing`.
+
+**Layers can't share unexported helpers.** Inside `files/`, `resolve()`, `writeErr`, `writeJSON` are shared freely between handler and service in one package. Split into layers → every cross-package hop is an exported API.
+
+**Repository over `os` is ceremony.** Moni's store is the stdlib; there's no SQL to isolate.
+
+### What the layered layout genuinely buys
+
+- **Uniformity at scale**: 50 engineers on a big CRUD app always know where a controller goes, even in unfamiliar features. Predictability beats cohesion when the codebase outgrows anyone's mental map.
+- **Multiple delivery mechanisms**: HTTP + gRPC + CLI sharing one `service/` layer and one `repository/`. Moni has one transport (HTTP) — nothing to share.
+- **Formal API contracts** (`api/` OpenAPI), Docker/K8s (`deployments/`), migrations, Makefile — real needs, but **orthogonal to Go package structure**. Project infra, not code organization.
+- **Team onboarding from Java/.NET** — familiar shape, low cognitive friction.
+
+### Verdict for moni
+
+- `internal/` — already have it.
+- `cmd/server/main.go` — the one cheap win; only matters if there'll ever be a second binary (the `-pair` tool is a flag, not a binary — fine as is).
+- `pkg/` — golang-standards' own FAQ says it's optional; `internal/` already restricts imports. Adding it for a logger would be premature.
+- `config/ + config.yaml` — moni is twelve-factor env-only and `install.sh` writes `config.env`; a yaml file adds a second source of truth.
+- **The layer split** — skip. Right shape for a DB-backed enterprise CRUD service with 10+ engineers; wrong weight for a two-layer filesystem server. Feature-slice keeps each feature cohesive and lets Go's package boundary do the enforcing.
+
+### The honest framing
+
+The proposal isn't "the proper structure" vs moni's "simple structure" — it's **one legitimate organizing axis (layer) vs another (feature)**. Moni optimizes for feature cohesion and minimal ceremony; the layered layout optimizes for uniformity and layer independence. Both are proper; they serve different project sizes.
+
+---
+
 ## Key takeaways
 
 1. **Layer**: handler (transport) → service (logic) → infra, dependencies pointing inward.

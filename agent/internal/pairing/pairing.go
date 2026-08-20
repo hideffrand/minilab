@@ -15,7 +15,7 @@ import (
 const prefix = "MOONI1:"
 
 // Encode produces the copy-pasteable code the mobile app understands
-// (see src/utils/pairingCode.ts on the app side — must stay in sync).
+// (see src/utils/pairingCode.ts on the app side - must stay in sync).
 func Encode(p dto.PairingPayload) string {
 	b, _ := json.Marshal(p)
 	return prefix + base64.StdEncoding.EncodeToString(b)

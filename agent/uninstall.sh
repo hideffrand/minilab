@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Mooni agent — one-command uninstall.
+# Mooni agent - one-command uninstall.
 # Removes the systemd service (if installed), the built binary, and the
 # config folder (~/.mooni). The storage folder is only deleted if the user
-# explicitly picks that option AND types DELETE — never automatically.
+# explicitly picks that option AND types DELETE - never automatically.
 set -euo pipefail
 
 CONFIG_DIR="$HOME/.mooni"
@@ -36,7 +36,7 @@ if [[ -f "$CONFIG_FILE" ]]; then
   STORAGE_DIR="${MOONI_ROOT_DIR:-}"
 fi
 
-echo "Mooni Agent — Uninstall"
+echo "Mooni Agent - Uninstall"
 echo "========================="
 
 # 1. Stop & remove the systemd service
@@ -48,7 +48,7 @@ if systemctl list-unit-files 2>/dev/null | grep -q "^${SERVICE_NAME}\."; then
   sudo systemctl daemon-reload
   echo "systemd service removed."
 else
-  echo "No systemd service installed — nothing to do."
+  echo "No systemd service installed - nothing to do."
 fi
 
 # Remove the passwordless-sudo rule that powered the app's Reboot/Shutdown.
@@ -66,7 +66,7 @@ else
   echo "No binary found."
 fi
 
-# 3. The shared storage folder is never deleted automatically — it's your
+# 3. The shared storage folder is never deleted automatically - it's your
 #    data. Uninstall only removes the service, binary, and config. The menu
 #    below lets you OPT IN to deleting the files, by number, and only after
 #    typing DELETE (an ambiguous "type the path" prompt is gone).
@@ -77,7 +77,7 @@ if [[ -n "$STORAGE_DIR" && -d "$STORAGE_DIR" ]]; then
   echo "  [1] $STORAGE_DIR"
   echo
   echo "What should uninstall do with the files in it?"
-  echo "  1) Keep all files — just uninstall (recommended)"
+  echo "  1) Keep all files - just uninstall (recommended)"
   echo "  2) Uninstall AND permanently delete all files in [1]"
   read -rp "Choose [1]: " choice
   case "${choice:-1}" in
@@ -90,7 +90,7 @@ if [[ -n "$STORAGE_DIR" && -d "$STORAGE_DIR" ]]; then
         rm -rf "$STORAGE_DIR"
         echo "Deleted: $STORAGE_DIR"
       else
-        echo "Aborted — files kept."
+        echo "Aborted - files kept."
       fi
       ;;
     *)
@@ -101,7 +101,7 @@ else
   echo "No storage folder configured."
 fi
 
-# 4. Remove the config folder (API key + saved pairing codes) — this is what
+# 4. Remove the config folder (API key + saved pairing codes) - this is what
 #    "unpairs" the phones.
 say "4/4 Remove the config folder"
 if [[ -d "$CONFIG_DIR" ]]; then

@@ -11,7 +11,7 @@ interface State {
 }
 
 // Catches render-time errors (e.g. invalid JSX) so a single screen can't
-// silently kill the app in a release build — it shows a recoverable screen
+// silently kill the app in a release build - it shows a recoverable screen
 // with the error message instead.
 export default class ErrorBoundary extends React.Component<Props, State> {
   state: State = { error: null };

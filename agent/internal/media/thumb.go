@@ -96,7 +96,7 @@ func downscale(src image.Image, maxDim int) image.Image {
 }
 
 // thumbCachePath derives the on-disk cache file from the source path, modtime
-// and size — any change to the file changes the key, so stale thumbs can't be
+// and size - any change to the file changes the key, so stale thumbs can't be
 // served. Hash path so the filename stays safe even if it contains slashes.
 func (s *Service) thumbCachePath(abs string, info os.FileInfo, maxDim int) string {
 	h := sha256.New()

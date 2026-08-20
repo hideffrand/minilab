@@ -51,7 +51,7 @@ export type UploadProgressCallback = (bytesSent: number, totalBytes: number) => 
  * on the server using multipart/form-data.
  *
  * Uses expo-file-system's createUploadTask (rather than uploadAsync) because
- * only the task variant exposes a progress callback — needed to drive
+ * only the task variant exposes a progress callback - needed to drive
  * per-file progress bars in the UI. Returns an object with an `uploadAsync`
  * to kick things off and a `cancel` to abort mid-flight if ever needed.
  */

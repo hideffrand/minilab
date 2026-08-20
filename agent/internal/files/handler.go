@@ -57,7 +57,7 @@ func writeErr(w http.ResponseWriter, status int, err error) {
 		msg = "permission denied"
 	} else {
 		// Business errors (e.g. "destination already exists") are fine to
-		// surface, but filesystem errors embed local paths — hide them.
+		// surface, but filesystem errors embed local paths - hide them.
 		var pe *os.PathError
 		var le *os.LinkError
 		if errors.As(err, &pe) || errors.As(err, &le) {

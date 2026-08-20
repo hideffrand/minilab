@@ -41,7 +41,7 @@ export interface DeviceProfile {
 /**
  * The pairing code is what a non-technical user pastes into the app to
  * add a device. It's just base64(JSON) of these three fields, generated
- * by the backend's install script — no manual typing of IP/API key needed.
+ * by the backend's install script - no manual typing of IP/API key needed.
  */
 export interface PairingPayload {
   name: string;

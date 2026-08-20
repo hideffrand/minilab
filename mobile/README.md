@@ -1,14 +1,14 @@
-# Mooni Control — Mobile App
+# Mooni Control - Mobile App
 
 Expo + React Native + TypeScript. Typecheck-clean (`npx tsc --noEmit`).
-**Target: Android first** — iOS is not a priority yet.
+**Target: Android first** - iOS is not a priority yet.
 
 ## Features
 
 - **Multi-device**: store several "devices" (laptops/servers running Linux)
   and switch between them easily from the **My Devices** screen.
 - **Setup without typing anything**: the **Add Device** screen has a
-  "Paste Code" mode with two options — **Scan QR** (point your camera at the
+  "Paste Code" mode with two options - **Scan QR** (point your camera at the
   QR printed by `install.sh` on the backend terminal) or **paste the pairing
   code** manually / from the clipboard. The name/URL/API key are filled in
   automatically from either method. You never need to know your Tailscale IP
@@ -24,26 +24,26 @@ Expo + React Native + TypeScript. Typecheck-clean (`npx tsc --noEmit`).
   because the backend uses HTTP Range); other files can be downloaded and
   shared (share sheet) to other apps on the phone.
 - **Media (Photos-style library)**: a dedicated media timeline over a separate
-  folder on the server — a date-grouped grid of thumbnails, a full-screen
+  folder on the server - a date-grouped grid of thumbnails, a full-screen
   viewer you swipe through (pinch-to-zoom on images, inline video playback
   with seek), long-press multi-select with bulk download/delete, and gallery
   upload (multi-pick from the photo picker). Requires the backend to be started
   with `MOONI_MEDIA_DIR`; otherwise the screen shows a "not enabled" notice.
-- **Home dashboard (first screen)**: live system health — CPU, memory, disk,
-  load average, uptime, process count, and temperature — auto-refreshing
+- **Home dashboard (first screen)**: live system health - CPU, memory, disk,
+  load average, uptime, process count, and temperature - auto-refreshing
   every few seconds, with the selected device's name in the header.
 - **Device switcher**: with more than one device paired, a row of chips at
   the top of the dashboard switches which machine you're viewing (tap to
   switch, "+" to add another).
 - **Power Control**: Reboot and Shutdown buttons on the dashboard. Each is
-  guarded by the phone's device lock — confirm, then unlock with your
+  guarded by the phone's device lock - confirm, then unlock with your
   fingerprint/PIN (system prompt). If the phone has no lock set, it falls back
-  to a type-to-confirm modal — a random token (e.g. `RAVEN-HARBOR-42`) must be
+  to a type-to-confirm modal - a random token (e.g. `RAVEN-HARBOR-42`) must be
   typed before the request is sent. The backend also requires a short-lived
   single-use confirm token, so the API key alone can't trigger a power action.
 - **Settings → Preferences → Appearance**: switch between Dark and Light
   theme. The choice is persisted on the device (AsyncStorage) and applies
-  app-wide — screens, modals, headers, and the status bar.
+  app-wide - screens, modals, headers, and the status bar.
 
 ## How to distribute to other people (no coding needed)
 
@@ -52,20 +52,20 @@ Expo + React Native + TypeScript. Typecheck-clean (`npx tsc --noEmit`).
 2. If the other person is near you: they just open the app, tap **Add Device**
    → **Scan QR Code**, and point the camera at your terminal screen. Done.
 3. If they're remote (can't scan): send them the pairing code text (chat,
-   shared note, etc. — treat it like a password, since it contains the API
+   shared note, etc. - treat it like a password, since it contains the API
    key), and they paste it in "Paste Code" mode.
 4. Install the app (via Expo Go for development, or the APK from
    `eas build` for production) if it isn't installed yet.
 
 There's no "enter your Tailscale IP manually" or "enter your API key
-manually" step for the end user — it's all wrapped up in the single code they
+manually" step for the end user - it's all wrapped up in the single code they
 paste.
 
 ## Expo Go vs Development Build
 
 All the dependencies in this project (`expo-camera`, `expo-file-system`,
 `expo-secure-store`, `expo-image-picker`, etc.) are standard native modules
-already bundled in **Expo Go** — so you can just run `npx expo start` and scan
+already bundled in **Expo Go** - so you can just run `npx expo start` and scan
 the Metro QR with the **Expo Go** app from the Play Store, no build needed.
 
 If you later want a **development build** (custom native code, or to make
@@ -93,7 +93,7 @@ npx expo start
 ```
 
 Scan the QR code with **Expo Go** on your phone (make sure the phone and the
-laptop running the Metro bundler are on the same network while developing —
+laptop running the Metro bundler are on the same network while developing -
 for everyday use the app connects to the backend via Tailscale, not Metro, so
 they don't need to share a network).
 
@@ -102,7 +102,7 @@ they don't need to share a network).
 ```
 src/
   api/             axios client + API functions (list, upload, system/power, media)
-  context/         DevicesContext — saved devices (AsyncStorage) &
+  context/         DevicesContext - saved devices (AsyncStorage) &
                    each device's API key (expo-secure-store)
   navigation/      React Navigation stack (DeviceList → Home → FileBrowser → FilePreview,
                    Home → Media → MediaViewer)
@@ -129,19 +129,19 @@ eas build --platform android
 ## Build your own APK from source (trust nothing prebuilt)
 
 Don't want to install an APK that someone else built? Build it yourself from
-this repo — the APK is compiled on your own machine from the exact source in
+this repo - the APK is compiled on your own machine from the exact source in
 `mobile/`, so you're trusting the code, not a binary.
 
 Two ways to build it: locally with Gradle (no Expo account needed), or via
 Expo's cloud build (EAS) if you'd rather not install Android Studio.
 
-**Option A — local Gradle build (no accounts, fully offline)**
+**Option A - local Gradle build (no accounts, fully offline)**
 
 Prerequisites (one-time):
 
 - Node.js 18+ and npm
 - JDK 17 (`java -version`)
-- Android SDK — easiest via
+- Android SDK - easiest via
   [Android Studio](https://developer.android.com/studio) (SDK Platform +
   command-line tools); make sure `ANDROID_HOME` is set.
 
@@ -153,14 +153,14 @@ cd mooni/mobile
 npm install
 npx expo prebuild --platform android   # generates the android/ project locally
 cd android
-./gradlew assembleRelease             # first run downloads Gradle + SDK deps — be patient
+./gradlew assembleRelease             # first run downloads Gradle + SDK deps - be patient
 ```
 
-**Option B — EAS cloud build (no Android SDK needed)**
+**Option B - EAS cloud build (no Android SDK needed)**
 
 Everything runs on Expo's build servers; you only need Node.js and a free
 [Expo account](https://expo.dev/signup). Note this does send your source up to
-Expo's servers to be compiled there — use Option A if you don't want that.
+Expo's servers to be compiled there - use Option A if you don't want that.
 
 ```bash
 cd mobile
@@ -176,7 +176,7 @@ device). `--profile preview` is already configured in `eas.json` to produce an
 installable APK.
 
 The APK lands at `android/app/build/outputs/apk/release/app-release.apk`,
-signed with the debug keystore — fine for personal sideloading. (If you want a
+signed with the debug keystore - fine for personal sideloading. (If you want a
 real release keystore, see the "Caution" comment in
 `android/app/build.gradle`.)
 
@@ -193,16 +193,16 @@ Then pair as usual: **Add Device → Scan QR** (point at the backend's
 ## Next-feature roadmap (not implemented yet)
 
 Reboot/shutdown power control is done (dashboard buttons, gated by the phone's
-device lock — fingerprint/PIN — with a type-to-confirm fallback when the phone
+device lock - fingerprint/PIN - with a type-to-confirm fallback when the phone
 has no lock set). What's still ahead, in suggested order:
 
-1. **Wake-on-LAN** — a UDP magic packet sent from the app to turn on a
-   powered-off machine (no backend needed — the point is to wake a machine
+1. **Wake-on-LAN** - a UDP magic packet sent from the app to turn on a
+   powered-off machine (no backend needed - the point is to wake a machine
    that's off).
-2. **Docker Manager** & **Systemd Service Control** — via the Unix socket
+2. **Docker Manager** & **Systemd Service Control** - via the Unix socket
    `/var/run/docker.sock` and `systemctl` (needs a restricted shell and a
    service whitelist to stay safe).
-3. **Custom Script Launcher** & **Remote Terminal/SSH** — the most sensitive;
+3. **Custom Script Launcher** & **Remote Terminal/SSH** - the most sensitive;
    Remote Terminal is best done with a real SSH client in the app connecting
    to your Mint SSH server (safer and more battle-tested than re-inventing a
    shell in the Go backend).

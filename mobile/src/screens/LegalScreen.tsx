@@ -51,7 +51,7 @@ const TERMS: Block[] = [
     title: "Removal of your data",
     body:
       "To revoke app access, remove the device from the app's device list or " +
-      "uninstall Mooni — this deletes the stored API key. Files on your server " +
+      "uninstall Mooni - this deletes the stored API key. Files on your server " +
       "are not touched and are yours to manage. Power control can also be " +
       "disabled by removing the passwordless-sudo rule on the server.",
   },

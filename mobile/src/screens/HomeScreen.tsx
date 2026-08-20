@@ -59,7 +59,7 @@ function formatBytes(bytes: number): string {
 }
 
 function formatUptime(seconds: number): string {
-  if (!seconds) return "—";
+  if (!seconds) return "-";
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -71,7 +71,7 @@ function formatUptime(seconds: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Color ramps — a single source of truth for "how worried should this look".
+// Color ramps - a single source of truth for "how worried should this look".
 // ---------------------------------------------------------------------------
 
 type ColorStop = { p: number; c: string };
@@ -142,7 +142,7 @@ function usePulse(active: boolean) {
 }
 
 // ---------------------------------------------------------------------------
-// Meter — a plain fill bar, colored as a solid from a 5-band range (0–20,
+// Meter - a plain fill bar, colored as a solid from a 5-band range (0–20,
 // 20–40, 40–60, 60–80, 80–100), rather than a continuous gradient.
 // ---------------------------------------------------------------------------
 
@@ -191,7 +191,7 @@ const meterStyles = StyleSheet.create({
 });
 
 // ---------------------------------------------------------------------------
-// CPU — a little chip with pin rows, glowing by load.
+// CPU - a little chip with pin rows, glowing by load.
 // ---------------------------------------------------------------------------
 
 function ChipGauge({ percent, colors }: { percent: number; colors: ThemeColors }) {
@@ -230,7 +230,7 @@ function ChipGauge({ percent, colors }: { percent: number; colors: ThemeColors }
 }
 
 // ---------------------------------------------------------------------------
-// Temperature — a real thermometer: mercury rises, bulb glows.
+// Temperature - a real thermometer: mercury rises, bulb glows.
 // ---------------------------------------------------------------------------
 
 const THERMO_TUBE_HEIGHT = 58;

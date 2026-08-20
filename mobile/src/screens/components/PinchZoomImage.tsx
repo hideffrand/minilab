@@ -64,7 +64,7 @@ export default function PinchZoomImage({
   const panResponder = useRef(
     PanResponder.create({
       // Only claim gestures ourselves when zoomed in (pan) or when a second
-      // finger lands (pinch) — otherwise the viewer's FlatList swipes pages.
+      // finger lands (pinch) - otherwise the viewer's FlatList swipes pages.
       onStartShouldSetPanResponder: () => cur.current.scale > 1,
       onMoveShouldSetPanResponder: (_e, g) =>
         g.numberActiveTouches === 2 || cur.current.scale > 1,

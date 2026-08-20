@@ -41,7 +41,7 @@ func main() {
 	c := cache.New(cfg.RedisAddr, cfg.RedisPassword)
 	if c.Enabled() {
 		if err := c.Ping(context.Background()); err != nil {
-			log.Printf("redis unreachable (%v) — running without cache", err)
+			log.Printf("redis unreachable (%v) - running without cache", err)
 			c.Close()
 			c = cache.New("", "")
 		} else {
@@ -74,7 +74,7 @@ func main() {
 	outer.Handle("/api/files/", protectedFiles)
 	if cfg.MediaDir != "" {
 		// Media library (Photos-style) is optional: only exposed when the user
-		// points MOONI_MEDIA_DIR at a dedicated directory. Same auth wrapper —
+		// points MOONI_MEDIA_DIR at a dedicated directory. Same auth wrapper -
 		// media endpoints read files off the host like the file ones.
 		mediaMux := http.NewServeMux()
 		mediaHandler := media.NewHandler(
@@ -122,7 +122,7 @@ func runPair(cfg *config.Config, name, hostOverride string) {
 		}
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not detect a reachable IP (%v).\n", err)
-			fmt.Fprintf(os.Stderr, "Printing a code for 127.0.0.1 (won't work from a phone) — re-run with -host <ip-or-hostname>, e.g.:\n")
+			fmt.Fprintf(os.Stderr, "Printing a code for 127.0.0.1 (won't work from a phone) - re-run with -host <ip-or-hostname>, e.g.:\n")
 			fmt.Fprintf(os.Stderr, "  ./mooni-backend -pair -host 100.x.x.x\n")
 			host = "127.0.0.1"
 		} else {

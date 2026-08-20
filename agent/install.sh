@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Mooni backend — one-command setup.
+# Mooni backend - one-command setup.
 # Builds the server, generates a random API key, detects a reachable IP
 # (Tailscale first, then the LAN IP), and prints a QR + pairing code the
 # mobile app can scan to connect.
@@ -41,7 +41,7 @@ if [[ -d /run/systemd/system ]]; then
   HAS_SYSTEMD=1
 fi
 
-echo "Mooni Backend — Setup"
+echo "Mooni Backend - Setup"
 echo "======================="
 
 # 1. Make sure Go is available
@@ -170,7 +170,7 @@ echo "Build finished: $BIN_PATH"
 # 8. IP for the pairing code (Tailscale -> manual -> auto LAN IP in the backend)
 say "8/8 Detect IP"
 if ! command -v tailscale >/dev/null 2>&1; then
-  echo "Tailscale is not installed — a Tailscale IP is required for the pairing code."
+  echo "Tailscale is not installed - a Tailscale IP is required for the pairing code."
   echo "Install Tailscale first (https://tailscale.com/download), log in with 'tailscale up',"
   echo "then run this script again."
   exit 1
@@ -179,7 +179,7 @@ TS_IP=""
 if TS_IP="$(tailscale ip -4 2>/dev/null || true)" && [[ -n "$TS_IP" ]]; then
   echo "Tailscale IP detected: $TS_IP"
 else
-  echo "Tailscale is installed but not running or not logged in — the phone won't be able to"
+  echo "Tailscale is installed but not running or not logged in - the phone won't be able to"
   echo "reach this machine. Run 'tailscale up' to log in, then run this script again."
   exit 1
 fi
@@ -189,7 +189,7 @@ if [[ "$IS_WSL" == "1" ]]; then
   echo "WSL networking note: the phone must be able to reach this machine."
   echo "  - With default NAT networking, the auto-detected IP is the WSL VM's NAT"
   echo "    address, which the phone cannot reach directly. Fix it one of these ways:"
-  echo "      1) Mirrored networking — create %UserProfile%\\.wslconfig containing:"
+  echo "      1) Mirrored networking - create %UserProfile%\\.wslconfig containing:"
   echo "           [wsl2]"
   echo "           networkingMode=mirrored"
   echo "         then 'wsl --shutdown' from Windows and reopen this terminal. The"
@@ -204,9 +204,9 @@ fi
 # Optional: install as a systemd service (auto-start on boot)
 if confirm "Run automatically at boot via systemd?" "y/N"; then
   if [[ "$HAS_SYSTEMD" != "1" ]]; then
-    echo "systemd is not running as PID 1 here — the service can't be installed."
+    echo "systemd is not running as PID 1 here - the service can't be installed."
     if [[ "$IS_WSL" == "1" ]]; then
-      echo "In WSL, enable systemd first — add to /etc/wsl.conf:"
+      echo "In WSL, enable systemd first - add to /etc/wsl.conf:"
       echo "  [boot]"
       echo "  systemd=true"
       echo "then run 'wsl --shutdown' from Windows and reopen this terminal."
@@ -249,14 +249,14 @@ if [[ "$IS_WSL" == "1" ]]; then
 elif confirm "Allow the app to reboot/shutdown this machine (needs sudo)?" "y/N"; then
   SYSTEMCTL="$(command -v systemctl)"
   if [[ -z "$SYSTEMCTL" ]]; then
-    echo "systemctl not found — power control not configured."
+    echo "systemctl not found - power control not configured."
   else
     SUDOERS_FILE="/etc/sudoers.d/mooni-power"
     sudo bash -c "printf '%s ALL=(ALL) NOPASSWD: %s reboot, %s poweroff\\n' \"$USER\" \"$SYSTEMCTL\" \"$SYSTEMCTL\" > $SUDOERS_FILE"
     sudo chmod 440 "$SUDOERS_FILE"
     if ! sudo visudo -cf "$SUDOERS_FILE"; then
       sudo rm -f "$SUDOERS_FILE"
-      echo "Sudoers rule invalid — removed. Power control not configured."
+      echo "Sudoers rule invalid - removed. Power control not configured."
     else
       echo "Power control enabled: passwordless sudo for $SYSTEMCTL reboot/poweroff."
     fi
